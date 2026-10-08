@@ -1,6 +1,6 @@
 # Deep Sequence Models in Commodity Markets
 
-This repository contains the code and report for testing whether an LSTM improves the net Sharpe ratio for a commodity ETF momentum strategy compared to linear baselines.
+This repository implements a quantitative trading pipeline that applies Long Short-Term Memory (LSTM) networks to predict returns for major commodity ETFs (DBC, USO, GLD, SLV, DBA). The project evaluates whether deep sequence models can capture nonlinear market dynamics better than traditional linear algorithms (Ridge, LightGBM, simple momentum). Predictions are fed into a walk-forward Mean-Variance optimizer to analyze whether the LSTM yields a statistically significant improvement in risk-adjusted returns (net Sharpe) once transaction costs and overfitting risks are strictly accounted for.
 
 ## Repository Structure
 - `data/`: Raw and processed financial data (ignored by git).
