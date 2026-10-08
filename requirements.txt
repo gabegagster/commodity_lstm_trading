@@ -1,0 +1,18 @@
+# Core Data Science & Finance
+pandas
+numpy
+scikit-learn
+yfinance
+
+# Deep Learning
+torch
+torchaudio
+torchvision
+
+# Custom Course Library (Assuming skfin is available via pip or local install)
+skfin
+
+# Notebooks & Plotting
+jupyterlab
+matplotlib
+seaborn
