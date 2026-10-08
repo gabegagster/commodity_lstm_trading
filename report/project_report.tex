@@ -1,0 +1,217 @@
+% Do not change document class, margins, fonts, etc.
+\documentclass[a4paper,oneside]{scrbook}
+
+% some useful packages
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{latexsym}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{algorithm}
+\counterwithin{algorithm}{chapter}
+\usepackage{algorithmic}
+\usepackage{csquotes}
+\renewcommand{\algorithmiccomment}[1]{\hfill\textit{// #1}}
+\usepackage[usenames,dvipsnames,table]{xcolor}
+\usepackage{array}
+\usepackage{xurl}
+\usepackage[colorlinks,citecolor=Green]{hyperref}
+
+% Table formatting helpers
+\definecolor{Missing}{RGB}{192,0,0}
+\newcommand{\miss}[1]{#1\textsuperscript{\textcolor{Missing}{**}}}
+
+% example enviroments
+\newtheorem{definition}{Definition} \newtheorem{proposition}{Proposition}
+
+\begin{document}
+
+% Quick fix to remove the 0 in front of sections.
+\makeatletter
+\renewcommand\thesection{\arabic{section}}
+\renewcommand\thesubsection{\arabic{section}.\arabic{subsection}}
+\renewcommand\thesubsubsection{\arabic{section}.\arabic{subsection}.\arabic{subsubsection}}
+\makeatother
+
+\subject{Portfolio Management and Trading \\ Project Report} 
+\title{Deep Sequence Models\\in Commodity Markets}
+\author{
+  Gabriel Himmelein\\
+  Tomàs Planelles Alonso\\
+} \date{November 13th, 2026}
+\publishers{{\small Submitted to}\\
+  Sylvain Champonnois\\}
+\maketitle
+
+\section{Abstract}
+This report investigates whether deep sequence models, specifically Long Short-Term Memory (LSTM) networks, can generate superior risk-adjusted returns net of transaction costs compared to linear baselines (Ridge, LightGBM, and simple momentum) in commodity markets. Using a panel of commodity ETFs (DBC, USO, GLD, SLV, DBA), we apply a walk-forward optimization framework to test the hypothesis that nonlinear temporal structure captured by an LSTM translates into a higher net Sharpe ratio. We mitigate the risk of overfitting by employing a small architecture and evaluating performance distributions across multiple random seeds.
+
+\section{Introduction}
+
+\subsection{Contextual Background}
+Commodity markets are driven by nonlinear, regime-dependent dynamics such as supply shocks, seasonality, inflation and deflation cycles, and contango/backwardation term structures. While linear models (e.g., Ridge, Lasso, and simple momentum) capture some predictability, they may inherently miss complex, nonlinear temporal structures. Deep sequence models like LSTM and GRU have become standard in other forecasting domains but remain less common in commodity timing applications. A significant gap exists in the current literature: most commodity momentum studies use linear predictors and ignore transaction costs, leaving it an open question whether deep learning architectures add tangible value net of costs for liquid commodity ETFs.
+
+\subsection{Project Contributions}
+This project makes several specific contributions to algorithmic trading in commodities:
+\begin{itemize}
+    \item \textbf{Data:} We construct a clean commodity ETF panel aligned to business-day frequency, enforcing a strict point-in-time discipline to prevent look-ahead bias.
+    \item \textbf{Algorithm:} We integrate an LSTM sequence predictor into a Mean-Variance backtesting pipeline, adapting traditional deep learning architectures for specific financial time-series constraints.
+    \item \textbf{Evaluation:} We evaluate the economic value of the predictions by measuring gross and net Sharpe ratios, risk-return profiles, drawdowns, and turnover, providing a holistic view of the strategy's viability.
+    \item \textbf{Comparison:} We conduct a rigorous comparative analysis pitting the LSTM against Ridge, LightGBM, and simple momentum, allocating equal hyperparameter tuning budgets to ensure a fair assessment.
+\end{itemize}
+
+\subsection{Summary of Main Empirical Results}
+\textit{[To be filled after experiments]} 
+Overall, the LSTM model generated a net Sharpe ratio of [X], compared to [Y] for the Ridge baseline and [Z] for LightGBM. The LSTM frontier positioned itself [above/below] the linear frontier on the risk-return plane, demonstrating [significant/negligible] economic value. However, transaction costs heavily impacted the deep learning strategy, reducing gross performance by [W]\%, highlighting the necessity of turnover regularization in nonlinear signals.
+
+\subsection{Literature and Resources}
+Our methodology is grounded in recent academic advancements in deep learning applied to commodity trading:
+\begin{itemize}
+    \item \textbf{Global Commodity Modeling:} Ben Ameur et al. (2024) justify the application of deep learning tools for forecasting broad commodity indices, validating our approach of modeling diversified baskets like DBC and DBA.
+    \item \textbf{LSTM vs. Traditional Baselines:} Ampountolas (2024) and Kampotha et al. (2024) explicitly compare LSTM architectures against traditional time-series and transformer models across trading horizons, providing the theoretical basis for our comparative hypothesis.
+    \item \textbf{Translating Signals to Trading Strategy:} Ke et al. (2023) and Suman et al. (2022) establish the framework for converting LSTM forecasts into actionable quantitative trading strategies, supporting our focus on actionable metrics like net Sharpe ratio and transaction costs.
+\end{itemize}
+Technologically, this project relies on Python ecosystem libraries including \texttt{scikit-learn}, \texttt{PyTorch} for deep learning architectures, \texttt{yfinance} for data acquisition, and the \texttt{skfin} module for portfolio optimization and backtesting.
+
+\section{Dataset Overview}
+
+\subsection{Origin and Composition}
+The primary dataset is sourced from Yahoo Finance via the \texttt{skfin.datasets.load\_yf\_returns} utility. The core universe consists of liquid commodity Exchange Traded Funds (ETFs): DBC (broad commodities), USO (oil), GLD (gold), SLV (silver), and DBA (agriculture). We utilize total returns, ensuring dividend reinvestments are accounted for. The data is resampled to business days (B) to maintain a consistent chronological index. Reproducibility is guaranteed via a notebook caching mechanism utilizing a \texttt{CacheManager}.
+
+\subsection{Chronological Accuracy}
+To prevent look-ahead bias and ensure chronological integrity, we implement the following checks:
+\begin{itemize}
+    \item Dropping all time periods prior to the respective inception dates of the newest ETF in the basket.
+    \item Forward-filling to handle missing days or stale prices on non-trading days.
+    \item Guaranteeing that all features engineered at date $t$ only utilize information strictly up to $t-1$.
+\end{itemize}
+\textit{Limitation Note:} Products like USO are heavily subjected to roll yield effects and contango. This implies the asset returns are a combination of spot price movements and the cost of rolling futures contracts.
+
+\subsection{Descriptive Statistics}
+\textit{[Insert discussion here on which ETFs exhibit high liquidity, regime shifts, or contango dominance based on the metrics below.]}
+
+\begin{table}[h]
+\centering
+\caption{Descriptive Statistics of Daily Total Returns}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Ticker} & \textbf{Mean (\%)} & \textbf{Std (\%)} & \textbf{Skew} & \textbf{Kurtosis} & \textbf{Min / Max (\%)} \\
+\midrule
+DBC & 0.00 & 0.00 & 0.00 & 0.00 & -0.00 / 0.00 \\
+USO & 0.00 & 0.00 & 0.00 & 0.00 & -0.00 / 0.00 \\
+GLD & 0.00 & 0.00 & 0.00 & 0.00 & -0.00 / 0.00 \\
+SLV & 0.00 & 0.00 & 0.00 & 0.00 & -0.00 / 0.00 \\
+DBA & 0.00 & 0.00 & 0.00 & 0.00 & -0.00 / 0.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Analytics and Learning Strategies}
+
+\subsection{Foundational Algorithm}
+The core predictive model is a Long Short-Term Memory (LSTM) network. Standard Multi-Layer Perceptrons (MLPs) struggle with time-series data because they do not retain temporal state. LSTMs solve this via a sequence memory architecture that captures nonlinear temporal dependencies.
+Because deep learning models are prone to overfitting in low signal-to-noise financial data, we deliberately constrain the architecture:
+\begin{itemize}
+    \item \textbf{Architecture:} 1 hidden layer with 16--32 units, utilizing an input lookback window of 60 days.
+    \item \textbf{Regularization:} Dropout set to 0.2 and early stopping based on validation loss.
+    \item \textbf{Optimization:} Adam optimizer with an active learning rate schedule, minimizing Mean Squared Error (MSE) or a robust Huber loss.
+\end{itemize}
+
+\subsection{Data Partitioning}
+We implement a strict walk-forward cross-validation procedure using \texttt{TimeSeriesSplit}.
+\begin{itemize}
+    \item \textbf{Windows:} A rolling training window of 3 years, paired with a 1-month out-of-sample test window. The model is retrained monthly.
+    \item \textbf{Validation:} The last 6 months of the training window are reserved as a validation slice exclusively for early stopping.
+    \item \textbf{Preprocessing:} Feature scaling (\texttt{StandardScaler}) is fit strictly on the training window and applied to the test set to prevent data leakage. Shuffling is strictly disabled.
+\end{itemize}
+
+\subsection{Parameter Selection and Optimization}
+To maintain a fair comparison, equal hyperparameter tuning budgets (e.g., number of search iterations) are allocated across all models. 
+\begin{itemize}
+    \item \textbf{LSTM:} Small random search over window length, hidden size, dropout, and batch size on an initial validation period (e.g., 2007–2015), frozen for the out-of-sample test period.
+    \item \textbf{Baselines:} Ridge regression (\texttt{RidgeCV} for alpha tuning), LightGBM (random search over tree depth and learning rate), and a fixed 12-month lookback simple momentum strategy.
+\end{itemize}
+
+\section{Empirical Results: Baseline and Robustness}
+
+\subsection{Baseline Results}
+\textit{[Insert insights on feature/asset attribution—which ETFs contributed most to PnL, and the lead-lag alpha decay of the LSTM signal.]}
+
+\begin{figure}[htbp]
+  \centering
+  \framebox{\parbox{0.8\textwidth}{\centering
+    \vspace{3cm}
+    \textbf{Cumulative PnL Plot Placeholder} \\
+    \small\textit{LSTM vs Ridge vs LightGBM vs Momentum (Net of Costs)}
+    \vspace{3cm}
+  }}
+  \caption{Cumulative Performance of learning strategies out-of-sample.}
+  \label{fig:pnl}
+\end{figure}
+
+\begin{table}[h]
+\centering
+\caption{Strategy Performance Metrics (Out-of-Sample)}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model} & \textbf{Gross Sharpe} & \textbf{Net Sharpe} & \textbf{Max Drawdown} & \textbf{Avg Turnover} \\
+\midrule
+LSTM & 0.00 & 0.00 & 0.00\% & 0.00 \\
+Ridge & 0.00 & 0.00 & 0.00\% & 0.00 \\
+LightGBM & 0.00 & 0.00 & 0.00\% & 0.00 \\
+Momentum & 0.00 & 0.00 & 0.00\% & 0.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Robustness Tests}
+Given the assertion that "overfitting is the default" in deep learning for finance, robustness tests form the core of our validation:
+\begin{itemize}
+    \item \textbf{Random Seeds:} We run the LSTM architecture across 10 random weight-initialization seeds. The distribution of net Sharpe ratios (Mean, Std, Min, Max) determines if outperformance is systematic or spurious.
+    \item \textbf{Transaction Costs:} We evaluate the sensitivity of the net Sharpe ratio by perturbing the liquidity factor assumptions in the cost model.
+    \item \textbf{Universe Stability:} Through an off-the-top analysis, we drop one ETF at a time from the universe to confirm the LSTM's edge is not heavily reliant on a single idiosyncratic asset (e.g., USO).
+\end{itemize}
+
+\section{Conclusion}
+
+\subsection{Recap of Primary Findings}
+This study set out to answer whether an LSTM sequence model improves net Sharpe ratios for commodity momentum compared to linear baselines. Our findings indicate that \textit{[Insert conclusion on statistical significance and economic meaning]}. When plotted on the risk-return plane, the LSTM frontier \textit{[demonstrated / failed to demonstrate]} a structural edge over Ridge regression once transaction costs and turnover were accounted for.
+
+\subsection{External Factors Influencing Results}
+Several market realities influence these results. The heavy contango in USO means the algorithm is often trading the shape of the futures curve rather than pure crude oil demand. Furthermore, regime changes—such as the 2008 financial crisis, the 2020 COVID-19 shock, and the 2022 inflationary spike—test the adaptation speed of the walk-forward retraining. Finally, the relatively short history of some ETFs limits the absolute number of independent training samples available for deep learning.
+
+\subsection{Directions for Further Work}
+Future research should consider replacing ETF proxies with continuous futures data for cleaner commodity exposure. Architecturally, exploring Temporal Convolutional Networks (TCN) or Neural ODEs might yield better parameter-to-performance ratios than LSTMs. Additionally, incorporating exogenous macro features (e.g., FRED oil inventories, US Dollar Index, VIX) could provide the deep learning model with the necessary context to navigate regime shifts more effectively.
+
+\begin{thebibliography}{9}
+
+\bibitem{ampountolas2024}
+Ampountolas, A. (2024). 
+\textit{Forecasting orange juice futures: LSTM, ConvLSTM, and traditional models across trading horizons}. 
+Journal of Risk and Financial Management.
+
+\bibitem{benameur2024}
+Ben Ameur, H., Boubaker, S., Ftiti, Z., \& Louhichi, W. (2024). 
+\textit{Forecasting commodity prices: empirical evidence using deep learning tools}. 
+Annals of Operations Research, Springer.
+
+\bibitem{kampotha2024}
+Kampotha, P., Wang, H., \& Li, C. (2024). 
+\textit{Transformer-based models for commodity trading price forecasting}. 
+2024 7th International Conference on Information and Computer Technologies, IEEE.
+
+\bibitem{ke2023}
+Ke, H., Zuominyang, Z., Qiumei, L., \& Yin, L. (2023). 
+\textit{Predicting chinese commodity futures price: An eemd-hurst-lstm hybrid approach}. 
+IEEE Access.
+
+\bibitem{suman2022}
+Suman, S., Kaushik, P., \& Challapalli, S. S. N. (2022). 
+\textit{Commodity Price Prediction for making informed Decisions while trading using Long Short-Term Memory (LSTM) Algorithm}. 
+International Conference on Computing, Communication, and Informatics, IEEE.
+
+\end{thebibliography}
+
+\end{document}
