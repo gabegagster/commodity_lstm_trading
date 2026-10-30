@@ -7,6 +7,13 @@ from src.data.load_data import (
     load_commodity_data,
     prepare_backtest_data,
 )
+from src.evaluation.backtester import (
+    MultiAssetBacktesterWithCost,
+    WalkForwardMeanVarianceWithCost,
+    compute_lo_confidence_interval,
+    compute_net_strategy_summary,
+    compute_vol_liquidity_factor,
+)
 from src.models.lstm_architecture import CommodityLSTM, get_default_device, set_seed
 from src.models.lstm_wrapper import PyTorchLSTMRegressor
 
@@ -20,4 +27,9 @@ __all__ = [
     "PyTorchLSTMRegressor",
     "get_default_device",
     "set_seed",
+    "WalkForwardMeanVarianceWithCost",
+    "MultiAssetBacktesterWithCost",
+    "compute_vol_liquidity_factor",
+    "compute_net_strategy_summary",
+    "compute_lo_confidence_interval",
 ]
