@@ -7511,7 +7511,7 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d7094331">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3ddac1be">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7531,27 +7531,27 @@ a.anchor-link {
 <li><strong>SLV</strong>: iShares Silver Trust (Precious Metals)</li>
 <li><strong>DBA</strong>: Invesco DB Agriculture Fund (Agriculture)</li>
 </ul>
-<h4 id="Grounding-in-Academic-Literature">Grounding in Academic Literature<a class="anchor-link" href="#Grounding-in-Academic-Literature">¶</a></h4><p>Our methodology and empirical design build directly on five streams of quantitative finance research:</p>
+<h4 id="Grounding-in-Academic-Literature">Grounding in Academic Literature<a class="anchor-link" href="#Grounding-in-Academic-Literature">¶</a></h4><p>Our methodology and empirical design build on five streams of quantitative finance research:</p>
 <ul>
-<li><strong>Time-Series Momentum in Commodities</strong>: <strong>Moskowitz, Ooi &amp; Pedersen (2012)</strong> (<em>Journal of Financial Economics</em>) and <strong>Miffre &amp; Rallis (2007)</strong> (<em>Journal of Banking &amp; Finance</em>) establish that 1- to 12-month trend-following generates significant positive alpha across commodity futures, motivating our 252-day Simple Momentum baseline and multi-horizon momentum feature set (5d, 21d, 63d, 126d, 252d).</li>
-<li><strong>Deep Sequence Models for Momentum (Deep Momentum Networks)</strong>: <strong>Lim, Zohren &amp; Roberts (2019)</strong> (<em>Journal of Financial Data Science</em>) and <strong>Wood, Giegerich, Roberts &amp; Zohren (2021/2022)</strong> (<em>Momentum Transformer</em>) demonstrate that compact LSTMs trained on multi-horizon return features outperform linear TSMOM benchmarks, provided turnover and regime shifts (such as the 2020 COVID-19 crash) are explicitly regularized.</li>
-<li><strong>Deep Learning in Diversified Commodity Baskets</strong>: <strong>Ben Ameur, Boubaker, Ftiti, Louhichi &amp; Tissaoui (2024)</strong> (<em>Annals of Operations Research</em>) and <strong>Ampountolas (2024)</strong> (<em>Journal of Risk and Financial Management</em>) show that LSTMs capture nonlinear regime dynamics across aggregate commodity indices (agriculture, energy, precious and industrial metals) better than linear and tree-based models.</li>
-<li><strong>Dynamic Portfolio Optimization with Quadratic Transaction Costs</strong>: <strong>Gârleanu &amp; Pedersen (2013)</strong> (<em>Journal of Finance</em>) derive the closed-form Markowitz policy under quadratic transaction costs (trading partially from past holdings $h_{t-1}$ toward the aim portfolio), which underpins <code>skfin</code>'s <code>MeanVarianceWithCost</code> and <code>BacktesterWithCost</code>.</li>
-<li><strong>Statistical Inference &amp; Machine Learning Asset Pricing Hygiene</strong>: <strong>Gu, Kelly &amp; Xiu (2020)</strong> (<em>Review of Financial Studies</em>) establish walk-forward validation and seed ensembling for financial machine learning, while <strong>Lo (2002)</strong> (<em>Financial Analysts Journal</em>) provides the HAC-corrected standard errors and confidence intervals for serial-correlated Sharpe ratios.</li>
+<li><strong>Time-Series Momentum in Commodities</strong>: Trend-following across 1- to 12-month horizons generates persistent positive alpha in commodity markets, motivating our 252-day Simple Momentum baseline and multi-horizon momentum feature set across 5d, 21d, 63d, 126d, and 252d lookbacks (Miffre &amp; Rallis, 2007; Moskowitz et al., 2012).</li>
+<li><strong>Deep Sequence Models for Momentum</strong>: Compact LSTMs trained on multi-scale return features can outperform linear time-series momentum benchmarks when portfolio turnover and macroeconomic regime shifts are explicitly regularized (Lim et al., 2019; Wood et al., 2022).</li>
+<li><strong>Deep Learning in Diversified Commodity Baskets</strong>: Recurrent sequence architectures capture nonlinear regime dynamics across aggregate commodity baskets—spanning agriculture, energy, and precious metals—more effectively than linear and tree-based models (Ampountolas, 2024; Ben Ameur et al., 2024).</li>
+<li><strong>Dynamic Portfolio Optimization with Quadratic Transaction Costs</strong>: Trading partially from existing holdings $h_{t-1}$ toward the Markowitz aim portfolio provides the closed-form optimal policy under quadratic market-impact costs and underpins <code>skfin</code>'s <code>MeanVarianceWithCost</code> and <code>BacktesterWithCost</code> (Gârleanu &amp; Pedersen, 2013).</li>
+<li><strong>Statistical Inference &amp; Machine Learning Asset Pricing Hygiene</strong>: Strict walk-forward validation and multi-seed ensembling mitigate backtest overfitting in financial machine learning, while autocorrelation-consistent (HAC) standard errors provide valid confidence intervals for serially correlated Sharpe ratios (Lo, 2002; Gu et al., 2020).</li>
 </ul>
 <h4 id="End-to-End-Methodology">End-to-End Methodology<a class="anchor-link" href="#End-to-End-Methodology">¶</a></h4><ol>
 <li><strong>Leak-Free Data Pipeline (Section 2–3)</strong>: Automated data acquisition via <code>yfinance</code> / <code>skfin.datasets.load_yf_returns</code>, business-day (<code>B</code>) alignment, synchronization to the newest ETF inception date (<strong>DBA</strong> in January 2007), dividend-adjusted total returns, and point-in-time multi-horizon momentum features (5d, 21d, 63d, 126d, 252d).</li>
 <li><strong>Baseline Benchmarks (Section 4)</strong>: Walk-forward evaluation of unlearned Simple Momentum (1-day and 252-day lookbacks) and Linear Ridge pipelines scaled to a 10% annualized target volatility (<code>risk_target = 0.10 / sqrt(260)</code>).</li>
 <li><strong>PyTorch LSTM &amp; Custom <code>skfin</code> Wrapper (Section 5)</strong>: Compact recurrent model (<code>CommodityLSTM</code>) with Xavier initialization, forget-gate bias initialization, dropout, Huber loss ($\delta = 0.01$), and a custom <code>PyTorchLSTMRegressor</code> wrapper that buffers trailing training history for seamless sequential walk-forward predictions inside <code>skfin.backtesting.Backtester</code>.</li>
 <li><strong>In-Sample Random Search Calibration (Section 6)</strong>: Hyperparameter optimization over an earlier calibration window (<strong>2012–2019</strong>) using <code>ParameterSampler</code> to prevent test-period data snooping.</li>
-<li><strong>Out-of-Sample Walk-Forward Evaluation &amp; Multi-Seed Ensembling (Section 7–8)</strong>: Evaluation on <strong>2020–2026</strong>, comparing the in-sample calibration winner against a compact strongly regularized LSTM (<code>lookback=20, hidden_size=8, weight_decay=1e-3</code>) across 5 random seeds and their Seed Ensemble (<strong>Gross SR = 0.81</strong>).</li>
-<li><strong>Baseline Tuning, Transaction Cost Modeling &amp; Statistical Validation (Section 9–10)</strong>: Fair baseline tuning (<code>RidgeCV</code> and 12-trial <code>MultiLGBMRegressor</code>), quadratic transaction cost modeling (<code>BacktesterWithCost</code> and <code>compute_pnl_components</code>), cost sensitivity analysis, Lo (2002) HAC-adjusted Sharpe confidence intervals, and off-the-top universe stability tests.</li>
+<li><strong>Out-of-Sample Walk-Forward Evaluation &amp; Multi-Seed Ensembling (Section 7–8)</strong>: Evaluation on <strong>2020–2026</strong> and historical subperiods (<strong>2013–2026</strong>), comparing the in-sample calibration winner against a compact strongly regularized LSTM (<code>lookback=20, hidden_size=8, weight_decay=1e-3</code>) across 5 random seeds and their Seed Ensemble (<strong>Gross SR = 0.81</strong>).</li>
+<li><strong>Baseline Tuning, Transaction Cost Modeling &amp; Statistical Validation (Section 9–10)</strong>: Fair baseline tuning (<code>RidgeCV</code> and 12-trial <code>MultiLGBMRegressor</code>), quadratic transaction cost modeling (<code>BacktesterWithCost</code> and <code>compute_pnl_components</code>), cost sensitivity analysis, HAC-adjusted Sharpe confidence intervals (Lo, 2002), and off-the-top universe stability tests.</li>
 </ol>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=594dccce">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8e755062">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7561,7 +7561,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=6807d038">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7ba0460a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7650,21 +7650,21 @@ Daily target volatility (10% annualized): 0.006202
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7a0a2655">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=87bb6fc6">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="2.-Data-Pipeline-&amp;-Exploratory-Analysis">2. Data Pipeline &amp; Exploratory Analysis<a class="anchor-link" href="#2.-Data-Pipeline-&amp;-Exploratory-Analysis">¶</a></h2><h3 id="2.1-Origin,-Inception-Synchronization,-and-Point-in-Time-Discipline">2.1 Origin, Inception Synchronization, and Point-in-Time Discipline<a class="anchor-link" href="#2.1-Origin,-Inception-Synchronization,-and-Point-in-Time-Discipline">¶</a></h3><p>Data is acquired via <code>skfin.datasets.load_yf_returns</code> and cached locally in <code>data/</code> using <code>CacheManager</code> for fast, offline execution.</p>
-<h4 id="Literature-Grounding:-Commodity-Universe-Selection-&amp;-Return-Mechanics">Literature Grounding: Commodity Universe Selection &amp; Return Mechanics<a class="anchor-link" href="#Literature-Grounding:-Commodity-Universe-Selection-&amp;-Return-Mechanics">¶</a></h4><p>Our five-ETF universe (<strong>DBC</strong>, <strong>USO</strong>, <strong>GLD</strong>, <strong>SLV</strong>, <strong>DBA</strong>) is designed to span the primary macroeconomic commodity sectors analyzed in the empirical literature:</p>
+<h4 id="Commodity-Universe-Selection-&amp;-Return-Mechanics">Commodity Universe Selection &amp; Return Mechanics<a class="anchor-link" href="#Commodity-Universe-Selection-&amp;-Return-Mechanics">¶</a></h4><p>Our five-ETF universe (<strong>DBC</strong>, <strong>USO</strong>, <strong>GLD</strong>, <strong>SLV</strong>, <strong>DBA</strong>) spans the primary macroeconomic commodity sectors using liquid, tradable instruments:</p>
 <ul>
-<li><strong>Broad &amp; Sector-Level Commodity Representation</strong>: <strong>Ben Ameur, Boubaker, Ftiti, Louhichi &amp; Tissaoui (2024, Section 3.1, pp. 354–356)</strong> evaluate deep learning models on the aggregate <strong>Bloomberg Commodity Index (<code>BCOM</code>)</strong> alongside its core sector subindices—<strong>Agriculture (<code>BCOMAG</code>)</strong>, <strong>Precious Metals (<code>BCOMPR</code>)</strong>, and <strong>Energy (<code>BCOMEN</code>)</strong>. Our liquid ETF basket mirrors this exact sectoral decomposition using tradable vehicles: <strong>DBC</strong> (Broad Diversified Commodities), <strong>DBA</strong> (Agriculture), <strong>GLD</strong> and <strong>SLV</strong> (Precious Metals), and <strong>USO</strong> (Crude Oil / Energy).</li>
-<li><strong>Spot Changes vs. Futures Roll Yield</strong>: As established by <strong>Moskowitz, Ooi &amp; Pedersen (2012, Section 2.1, pp. 230–231 &amp; Section 6.3, pp. 247–248)</strong>, excess returns on commodity futures indices (<code>DBC</code>, <code>USO</code>, <code>DBA</code>) combine underlying spot price movements with the futures <strong>roll yield</strong> arising from the term structure (positive in <em>backwardation</em>, negative in <em>contango</em>), plus collateral interest yield. By contrast, physically backed precious metal trusts (<code>GLD</code>, <code>SLV</code>) track spot bullion prices net of storage fees.</li>
+<li><strong>Broad &amp; Sector-Level Commodity Representation</strong>: Our basket mirrors the sectoral decomposition of aggregate commodity benchmarks by combining broad diversified commodities (<strong>DBC</strong>), agriculture (<strong>DBA</strong>), precious metals (<strong>GLD</strong>, <strong>SLV</strong>), and crude oil / energy (<strong>USO</strong>), capturing heterogeneous supply-demand and inflation-hedging dynamics across subsectors (Ben Ameur et al., 2024).</li>
+<li><strong>Spot Changes vs. Futures Roll Yield</strong>: Excess returns on our futures-based ETFs (<code>DBC</code>, <code>USO</code>, <code>DBA</code>) combine underlying spot price movements with the futures <strong>roll yield</strong> arising from the term structure (positive in <em>backwardation</em>, negative in <em>contango</em>) and collateral interest yield, whereas physically backed precious metal trusts (<code>GLD</code>, <code>SLV</code>) track spot bullion prices net of storage fees (Moskowitz et al., 2012).</li>
 </ul>
 <p>To guarantee chronological integrity and prevent look-ahead bias:</p>
 <ol>
-<li><strong>Synchronized Inception Date &amp; Sample Span (<code>2007–2026</code>, $N = 5,005$ days)</strong>: Commodity ETFs did not exist in the 1960s–1990s (<strong>GLD</strong> launched in Nov 2004, <strong>DBC/USO/SLV</strong> in 2006, and <strong>DBA</strong> in Jan 2007). Dropping observations prior to <strong>DBA</strong>'s inception in January 2007 captures 100% of the historical lifespan of this 5-ETF universe in the modern post-financialization electronic commodity era, closely matching the ~20-year daily sample size of <strong>Ben Ameur et al. (2024, Section 3.1, p. 354)</strong> ($N = 5,152$ daily observations from 2002 to 2022).</li>
+<li><strong>Synchronized Inception Date &amp; Sample Span (<code>2007–2026</code>, $N = 5,005$ days)</strong>: Because commodity ETFs did not exist in the 1960s–1990s (<strong>GLD</strong> launched in Nov 2004, <strong>DBC/USO/SLV</strong> in 2006, and <strong>DBA</strong> in Jan 2007), dropping observations prior to <strong>DBA</strong>'s inception in January 2007 captures 100% of the historical lifespan of this 5-ETF universe in the modern post-financialization electronic commodity era and provides a ~20-year daily sample size ($N = 5,005$) comparable to recent deep learning studies on daily commodity indices (Ben Ameur et al., 2024).</li>
 <li><strong>Business-Day Alignment</strong>: The return series is reindexed to business days (<code>freq='B'</code>), forward-filling stale prices and replacing non-trading day gaps with zero return.</li>
 <li><strong>Total Returns</strong>: Returns incorporate both price changes and cash/dividend distributions ($R_t = \frac{P_t + D_t - P_{t-1}}{P_{t-1}}$).</li>
 <li><strong>Point-in-Time Feature Alignment</strong>: Features calculated at date $t$ only utilize information strictly up to date $t$. The forecast target $y_t$ corresponds to next-period return $r_{t+1}$.</li>
@@ -7672,7 +7672,7 @@ Daily target volatility (10% annualized): 0.006202
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=c815613b">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=35dbdc8e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7784,33 +7784,33 @@ Daily target volatility (10% annualized): 0.006202
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b9951615">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a332c1a2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h3 id="2.2-Descriptive-Statistics-&amp;-Empirical-Stylized-Facts">2.2 Descriptive Statistics &amp; Empirical Stylized Facts<a class="anchor-link" href="#2.2-Descriptive-Statistics-&amp;-Empirical-Stylized-Facts">¶</a></h3><p>Table 1 displays key distributional properties of daily commodity ETF total returns over <strong>2007–2026</strong>: Annualized Mean Return, Annualized Volatility, Sharpe Ratio, Skewness, Excess Kurtosis, and Min/Max daily shocks.</p>
-<h4 id="Comparison-with-Empirical-Literature">Comparison with Empirical Literature<a class="anchor-link" href="#Comparison-with-Empirical-Literature">¶</a></h4><ol>
+<h4 id="Empirical-Stylized-Facts-in-Our-Panel">Empirical Stylized Facts in Our Panel<a class="anchor-link" href="#Empirical-Stylized-Facts-in-Our-Panel">¶</a></h4><ol>
 <li><strong>Cross-Sectional Volatility Dispersion &amp; Need for Volatility Scaling</strong>:<ul>
-<li>In Table 1 below, annualized volatility varies by more than a factor of two across commodity sectors: <strong>DBA</strong> (<code>16.68%</code>), <strong>GLD</strong> (<code>18.14%</code>), and <strong>DBC</strong> (<code>18.90%</code>) exhibit moderate volatility, whereas <strong>SLV</strong> (<code>32.68%</code>) and <strong>USO</strong> (<code>37.49%</code>) experience high return variance.</li>
-<li>This closely matches <strong>Moskowitz, Ooi &amp; Pedersen (2012, Table 1, p. 232)</strong>, who document annualized volatilities of <code>34.72%</code> for Crude Oil and <code>28.59%</code> for Silver compared to <code>21.37%</code> for Gold and <code>17.14%–24.59%</code> across agricultural futures. As <strong>Moskowitz et al. (2012, Section 2.4, p. 231)</strong> and <strong>Lim, Zohren &amp; Roberts (2019, Section III-A, p. 3)</strong> emphasize, this heterogeneity makes covariance/volatility scaling (<code>MeanVariance(risk_target=TARGET_VOL)</code>) essential so that energy and silver do not dominate portfolio risk.</li>
+<li>In Table 1 below, annualized volatility varies by more than a factor of two across commodity sectors: <strong>DBA</strong> (<code>16.68%</code>), <strong>GLD</strong> (<code>18.14%</code>), and <strong>DBC</strong> (<code>18.90%</code>) exhibit moderate volatility, whereas <strong>SLV</strong> (<code>32.68%</code>) and <strong>USO</strong> (<code>37.49%</code>) experience substantially higher return variance.</li>
+<li>This wide cross-sectional dispersion between high-volatility energy/silver contracts and lower-volatility gold/agricultural contracts makes explicit covariance and volatility scaling (<code>MeanVariance(risk_target=TARGET_VOL)</code>) essential so that energy and silver do not dominate portfolio risk (Moskowitz et al., 2012; Lim et al., 2019).</li>
 </ul>
 </li>
 <li><strong>Contango Drag vs. Trend Predictability in Energy (<code>USO</code>)</strong>:<ul>
-<li>Passive buy-and-hold performance is starkly bifurcated: <strong>GLD</strong> achieves a passive Sharpe ratio of <code>0.66</code> (<code>11.98%</code> annualized return), whereas <strong>USO</strong> yields a passive Sharpe ratio of just <code>0.07</code> (<code>2.49%</code> annualized return with a <code>-25.32%</code> single-day crash during the April 2020 WTI negative-oil episode).</li>
-<li><strong>Moskowitz et al. (2012, Section 6.3, pp. 247–248)</strong> explain this phenomenon by decomposing futures returns into spot changes and <em>roll yield</em>: energy futures frequently trade in steep <em>contango</em> during storage gluts, eroding passive long-only ETF returns. However, <strong>Moskowitz et al. (2012)</strong> show that <em>time-series momentum</em> thrives in such markets because it profits on both the long side during backwardated supply squeezes and the short side during persistent contango downturns.</li>
+<li>Passive buy-and-hold performance across our universe is starkly bifurcated: <strong>GLD</strong> achieves a passive Sharpe ratio of <code>0.66</code> (<code>11.98%</code> annualized return), whereas <strong>USO</strong> yields a passive Sharpe ratio of just <code>0.07</code> (<code>2.49%</code> annualized return with a <code>-25.32%</code> single-day crash during the April 2020 WTI negative-oil episode).</li>
+<li>While passive long-only energy positions suffer during storage gluts when futures trade in steep <em>contango</em> (negative roll yield), dynamic time-series momentum strategies can still extract strong alpha from energy markets by profiting on the long side during backwardated supply squeezes and on the short side during persistent contango downturns (Moskowitz et al., 2012).</li>
 </ul>
 </li>
 <li><strong>Asymmetry, Fat Tails, and Nonlinearity</strong>:<ul>
-<li><strong>Ben Ameur et al. (2024, Table 3, p. 356)</strong> reject normality across all commodity indices (Jarque-Bera $p &lt; 0.01$), documenting pronounced negative skewness and heavy tails. Our daily ETF panel exhibits the exact same stylized facts—negative skewness across four of the five ETFs (<code>-0.59</code> for <code>SLV</code>, <code>-0.39</code> for <code>DBC</code>, <code>-0.26</code> for <code>USO</code>) and severe excess kurtosis (<code>6.06</code> to <code>10.17</code>)—directly motivating our use of <strong>Huber loss ($\delta = 0.01$)</strong> in Section 5 so extreme tail outliers do not destabilize gradient updates.</li>
+<li>Our daily ETF panel exhibits strong departures from normality—with negative skewness across four of the five ETFs (<code>-0.59</code> for <code>SLV</code>, <code>-0.39</code> for <code>DBC</code>, <code>-0.26</code> for <code>USO</code>) and severe excess kurtosis (<code>6.06</code> to <code>10.17</code>)—directly motivating our choice of a nonlinear sequence architecture trained with tail-robust <strong>Huber loss ($\delta = 0.01$)</strong> so extreme outlier shocks do not destabilize gradient updates (Ben Ameur et al., 2024).</li>
 </ul>
 </li>
 </ol>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=c5b41fe4">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bd30689b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7929,7 +7929,7 @@ Daily target volatility (10% annualized): 0.006202
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=69b65caf">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0031a7b6">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7937,13 +7937,13 @@ Daily target volatility (10% annualized): 0.006202
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h3 id="2.3-Historical-Performance,-Structural-Regimes,-and-Cross-Asset-Correlations">2.3 Historical Performance, Structural Regimes, and Cross-Asset Correlations<a class="anchor-link" href="#2.3-Historical-Performance,-Structural-Regimes,-and-Cross-Asset-Correlations">¶</a></h3><p>We inspect cumulative total returns and the empirical correlation matrix across the commodity basket using <code>skfin.plot.line</code> and <code>skfin.plot.heatmap</code>.</p>
 <ul>
-<li><strong>Macroeconomic Structural Breaks</strong>: Consistent with <strong>Ben Ameur et al. (2024, Fig. 5, p. 359 &amp; Section 3.2, p. 360)</strong> and <strong>Wood, Giegerich, Roberts &amp; Zohren (2022, Section VI-A, p. 6)</strong>, the 2007–2026 trajectory spans four distinct commodity regimes: (i) the 2007–2008 Global Financial Crisis boom-bust, (ii) the prolonged 2012–2019 low-volatility commodity bear market (used as our hyperparameter calibration window), (iii) the March–April 2020 SARS-CoV-2 demand collapse, and (iv) the 2021–2026 inflationary surge and Russia-Ukraine supply shock.</li>
-<li><strong>Cross-Sector Diversification Potential</strong>: While <strong>DBC</strong> and <strong>USO</strong> (<code>corr = 0.79</code>) and <strong>GLD</strong> and <strong>SLV</strong> (<code>corr = 0.80</code>) co-move within their respective energy and precious-metal complexes, correlations between <strong>Precious Metals (<code>GLD</code>)</strong> and <strong>Energy (<code>USO</code>, <code>corr = 0.20</code>)</strong> or <strong>Agriculture (<code>DBA</code>, <code>corr = 0.27</code>)</strong> are low. This supports <strong>Moskowitz et al. (2012, Section 3.3, p. 239)</strong>, who show that combining distinct commodity sectors inside a covariance-aware portfolio substantially reduces aggregate portfolio volatility.</li>
+<li><strong>Macroeconomic Structural Breaks</strong>: Our 2007–2026 return trajectories span four distinct macroeconomic commodity regimes: (i) the 2007–2008 Global Financial Crisis boom-bust, (ii) the prolonged 2012–2019 low-volatility commodity bear market (used as our hyperparameter calibration window), (iii) the March–April 2020 SARS-CoV-2 demand collapse, and (iv) the 2021–2026 inflationary surge and Russia-Ukraine supply shock (Wood et al., 2022; Ben Ameur et al., 2024).</li>
+<li><strong>Cross-Sector Diversification Potential</strong>: While <strong>DBC</strong> and <strong>USO</strong> (<code>corr = 0.79</code>) and <strong>GLD</strong> and <strong>SLV</strong> (<code>corr = 0.80</code>) co-move within their respective energy and precious-metal complexes, correlations between <strong>Precious Metals (<code>GLD</code>)</strong> and <strong>Energy (<code>USO</code>, <code>corr = 0.20</code>)</strong> or <strong>Agriculture (<code>DBA</code>, <code>corr = 0.27</code>)</strong> remain low, allowing our multi-asset covariance-aware portfolio construction to substantially reduce aggregate portfolio volatility (Moskowitz et al., 2012).</li>
 </ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fc86029b">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bc4bad04">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7989,7 +7989,7 @@ Daily target volatility (10% annualized): 0.006202
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=19981794">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6c0fc736">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8001,21 +8001,21 @@ Daily target volatility (10% annualized): 0.006202
 <li>$y_t$: Target vector of next-day returns $r_{t+1}$ (<code>shift(-1)</code>).</li>
 <li>When the <code>Backtester</code> computes holdings $h_t$, the backtested PnL is computed as $\text{pnl}_{t+1} = h_t \cdot r_{t+1}$ via <code>h.shift(1).mul(ret)</code>. This ensures zero look-ahead bias.</li>
 </ul>
-<h4 id="Theoretical-&amp;-Empirical-Basis-for-Multi-Horizon-Momentum-Inputs">Theoretical &amp; Empirical Basis for Multi-Horizon Momentum Inputs<a class="anchor-link" href="#Theoretical-&amp;-Empirical-Basis-for-Multi-Horizon-Momentum-Inputs">¶</a></h4><p>Our feature engineering directly synthesizes the econometric findings of <strong>Moskowitz, Ooi &amp; Pedersen (2012)</strong> with the <strong>Deep Momentum Network (DMN)</strong> feature representation of <strong>Lim, Zohren &amp; Roberts (2019)</strong> and <strong>Wood, Giegerich, Roberts &amp; Zohren (2022)</strong>:</p>
+<h4 id="Theoretical-&amp;-Empirical-Basis-for-Multi-Horizon-Momentum-Inputs">Theoretical &amp; Empirical Basis for Multi-Horizon Momentum Inputs<a class="anchor-link" href="#Theoretical-&amp;-Empirical-Basis-for-Multi-Horizon-Momentum-Inputs">¶</a></h4><p>Our feature engineering captures the term structure of commodity return continuation across multiple lookback horizons:</p>
 <ul>
-<li><strong>The 1- to 12-Month Commodity Momentum Term Structure</strong>: <strong>Moskowitz, Ooi &amp; Pedersen (2012, Section 3.1, Fig. 1 Panel C &amp; Table 2 Panel B, pp. 233–235)</strong> regress volatility-scaled monthly commodity futures returns on lagged returns across lookback horizons of 1 to 60 months. Across 24 commodity contracts, they document statistically significant positive return continuation from 1 month up to 12 months—with pooled $t$-statistics of <code>2.44</code> (1-month), <code>4.54</code> (3-month), <code>3.86</code> (6-month), <code>3.77</code> (9-month), and <code>4.66</code> (12-month) for a 1-month holding period—followed by partial long-horizon reversals beyond 12 months.</li>
-<li><strong>Multi-Timescale Input Representation for Sequence Models</strong>: Rather than restricting the predictor to a single lookback, <strong>Lim, Zohren &amp; Roberts (2019, Section V-B.1, p. 7)</strong> and <strong>Wood, Giegerich, Roberts &amp; Zohren (2022, Section IV-A, Eq. 10, p. 5 &amp; Appendix B, p. 16)</strong> construct their neural network input vector at day $t$ using returns computed over five canonical timescales matching daily/weekly, monthly, quarterly, biannual, and annual horizons ($\tau \in \{1\text{ or }5, 21, 63, 126, 252\}$ trading days). Feeding this multi-scale term structure into an LSTM allows its recurrent gates to simultaneously capture fast short-term reversals/breakouts (<code>5d, 21d</code>) and intermediate-to-slow trend continuation (<code>63d, 126d, 252d</code>).</li>
+<li><strong>The 1- to 12-Month Commodity Momentum Term Structure</strong>: Commodity returns exhibit statistically significant positive trend continuation across lookback horizons ranging from 1 month up to 12 months before partially mean-reverting at longer multi-year horizons, motivating features that span the full 1-week to 12-month window (Moskowitz et al., 2012).</li>
+<li><strong>Multi-Timescale Input Representation for Sequence Models</strong>: Rather than restricting the recurrent network to a single lookback window, our input vector at day $t$ stacks rolling returns across five canonical timescales matching weekly, monthly, quarterly, biannual, and annual horizons (<code>5d, 21d, 63d, 126d, 252d</code>), enabling the LSTM gates to simultaneously learn fast short-term breakouts/reversals and slower intermediate-to-annual trend continuation (Lim et al., 2019; Wood et al., 2022).</li>
 </ul>
 <p>We therefore construct three feature representations to test whether multi-scale sequence learning adds value over single-horizon representations:</p>
 <ol>
 <li><strong>Raw Daily Returns (<code>X_raw</code>)</strong>: 1-day asset return vectors ($5$ features).</li>
-<li><strong>12-Month Simple Momentum (<code>X_mom_252</code>)</strong>: 252-day rolling average returns across the 5 assets ($5$ features) for the canonical <strong>Moskowitz et al. (2012)</strong> 12-month TSMOM benchmark.</li>
+<li><strong>12-Month Simple Momentum (<code>X_mom_252</code>)</strong>: 252-day rolling average returns across the 5 assets ($5$ features) for the classic 12-month time-series momentum benchmark (Moskowitz et al., 2012).</li>
 <li><strong>Multi-Horizon Momentum (<code>X_mom</code>)</strong>: Rolling return averages across 5 horizons (<code>5d, 21d, 63d, 126d, 252d</code> business days $\approx$ 1 week, 1 month, 3 months, 6 months, and 12 months) across the 5 assets ($5 \times 5 = 25$ features total).</li>
 </ol>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fee367e1">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b881a44c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8056,7 +8056,7 @@ Multi-horizon momentum features shape: (4906, 25)
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b9c74b24">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=27bed784">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8064,15 +8064,15 @@ Multi-horizon momentum features shape: (4906, 25)
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="4.-Benchmark-Pipelines:-Simple-Momentum-&amp;-Linear-Ridge">4. Benchmark Pipelines: Simple Momentum &amp; Linear Ridge<a class="anchor-link" href="#4.-Benchmark-Pipelines:-Simple-Momentum-&amp;-Linear-Ridge">¶</a></h2><p>Before testing the LSTM, we establish our initial baseline strategies in the <code>skfin.backtesting.Backtester</code> pipeline using a 3-year rolling training window (<code>max_train_size=756</code>), monthly model updates (<code>test_size=21</code>), and a 10% annualized volatility target (<code>risk_target=TARGET_VOL</code>):</p>
 <ol>
-<li><strong>Simple Momentum (<code>252d</code>)</strong>: Mean-variance portfolio directly weighting 12-month (<code>252</code>-day) historical rolling returns (<code>X_mom_252</code>). This implements the canonical $\text{TSMOM}(12, 1)$ benchmark of <strong>Moskowitz, Ooi &amp; Pedersen (2012, Section 4.1, Eq. 5, p. 236)</strong>, which ranks/weights assets by their past 12-month return, rebalances monthly (<code>21</code> business days), and scales positions inversely by covariance/volatility.</li>
-<li><strong>Short-Term Momentum (<code>1d</code>)</strong>: Mean-variance portfolio directly weighting 1-day returns (<code>X_raw</code>), corresponding to the shortest-horizon (<code>1d</code>) linear baseline evaluated alongside 252-day TSMOM in <strong>Lim, Zohren &amp; Roberts (2019, Section V-B.1, p. 7)</strong>.</li>
+<li><strong>Simple Momentum (<code>252d</code>)</strong>: Mean-variance portfolio directly weighting 12-month (<code>252</code>-day) historical rolling returns (<code>X_mom_252</code>), implementing the canonical 12-month lookback / 1-month rebalancing time-series momentum specification with covariance scaling (Moskowitz et al., 2012).</li>
+<li><strong>Short-Term Momentum (<code>1d</code>)</strong>: Mean-variance portfolio directly weighting 1-day returns (<code>X_raw</code>), representing a fast daily continuation benchmark alongside annual momentum (Lim et al., 2019).</li>
 <li><strong>Linear Ridge Baseline</strong>: Fixed-penalty $L_2$-shrunk linear regression (<code>alpha=100.0</code>) with point-in-time feature scaling (<code>StandardScaler(with_mean=False)</code>).</li>
-<li><strong>Uniform Volatility Target Rescaling ($\sigma_{\text{tgt}} = 10\%$ p.a.)</strong>: Following <strong>Moskowitz et al. (2012, Eq. 1, p. 231)</strong>, <strong>Lim et al. (2019, Section III-A, Eq. 1, p. 3)</strong>, and <strong>Wood et al. (2022, Section IV, Eq. 9, p. 5)</strong>, all strategies are scaled via <code>MeanVariance(risk_target=TARGET_VOL)</code> to the exact same 10% annualized target volatility (<code>TARGET_VOL = 0.10 / np.sqrt(260)</code>) so that cumulative PnL trajectories and drawdowns are directly comparable.</li>
+<li><strong>Uniform Volatility Target Rescaling ($\sigma_{\text{tgt}} = 10\%$ p.a.)</strong>: All strategies are scaled via <code>MeanVariance(risk_target=TARGET_VOL)</code> to the exact same 10% annualized target volatility (<code>TARGET_VOL = 0.10 / np.sqrt(260)</code>) so that cumulative PnL trajectories, Sharpe ratios, and drawdowns are compared on an identical risk basis (Moskowitz et al., 2012; Lim et al., 2019; Wood et al., 2022).</li>
 </ol>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=aa82a0cd">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=72d40adc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8140,23 +8140,23 @@ Multi-horizon momentum features shape: (4906, 25)
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a9a2ce22">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b5a2a87f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="5.-PyTorch-Deep-Sequence-Model">5. PyTorch Deep Sequence Model<a class="anchor-link" href="#5.-PyTorch-Deep-Sequence-Model">¶</a></h2><h3 id="5.1-Recurrent-Gate-Formulation-&amp;-Architecture-Design-to-Prevent-Overfitting">5.1 Recurrent Gate Formulation &amp; Architecture Design to Prevent Overfitting<a class="anchor-link" href="#5.1-Recurrent-Gate-Formulation-&amp;-Architecture-Design-to-Prevent-Overfitting">¶</a></h3><p>As formalized in <strong>Lim, Zohren &amp; Roberts (2019, Section IV-A, Eqs. 28–33, p. 7)</strong> and <strong>Ben Ameur et al. (2024, Section 2.2.1, Eqs. 1–5, p. 353)</strong>, a Long Short-Term Memory (LSTM) cell maintains a persistent internal memory state $c_t$ alongside its hidden representation $h_t$ across sequence steps $t - L + 1, \dots, t$, regulated by three sigmoidal gates—the <strong>input gate</strong> $i_t$, <strong>forget gate</strong> $f_t$, and <strong>output gate</strong> $o_t$:
+<h2 id="5.-PyTorch-Deep-Sequence-Model">5. PyTorch Deep Sequence Model<a class="anchor-link" href="#5.-PyTorch-Deep-Sequence-Model">¶</a></h2><h3 id="5.1-Recurrent-Gate-Formulation-&amp;-Architecture-Design-to-Prevent-Overfitting">5.1 Recurrent Gate Formulation &amp; Architecture Design to Prevent Overfitting<a class="anchor-link" href="#5.1-Recurrent-Gate-Formulation-&amp;-Architecture-Design-to-Prevent-Overfitting">¶</a></h3><p>Our <code>CommodityLSTM</code> model maintains a persistent internal cell state $c_t$ alongside its hidden representation $h_t$ across sequence steps $t - L + 1, \dots, t$, regulated by three sigmoidal gates—the <strong>input gate</strong> $i_t$, <strong>forget gate</strong> $f_t$, and <strong>output gate</strong> $o_t$ (Lim et al., 2019; Ben Ameur et al., 2024):
 $$f_t = \sigma(W_f x_t + U_f h_{t-1} + b_f), \quad i_t = \sigma(W_i x_t + U_i h_{t-1} + b_i), \quad \tilde{c}_t = \tanh(W_c x_t + U_c h_{t-1} + b_c)$$
 $$c_t = f_t \odot c_{t-1} + i_t \odot \tilde{c}_t, \quad o_t = \sigma(W_o x_t + U_o h_{t-1} + b_o), \quad h_t = o_t \odot \tanh(c_t)$$
-where $\sigma(\cdot)$ is the logistic sigmoid and $\odot$ denotes element-wise multiplication. In <code>CommodityLSTM</code>, we initialize input/recurrent weights via Xavier uniform initialization and set the initial forget-gate bias to $b_f = +1.0$ so the network defaults to remembering multi-horizon momentum states early in training before selectively pruning noisy signals.</p>
-<h4 id="Critical-Methodological-Contrast:-Return-Forecasting-vs.-Price-Level-Forecasting">Critical Methodological Contrast: Return Forecasting vs. Price-Level Forecasting<a class="anchor-link" href="#Critical-Methodological-Contrast:-Return-Forecasting-vs.-Price-Level-Forecasting">¶</a></h4><p>Comparing our specification against <strong>Ben Ameur et al. (2024, Table 1, p. 355 &amp; Table 5, p. 358)</strong> and <strong>Lim, Zohren &amp; Roberts (2019, Section IV-B, p. 7 &amp; Exhibit 9, p. 17)</strong> highlights why architectural parsimony is essential for portfolio trading:</p>
+where $\sigma(\cdot)$ is the logistic sigmoid and $\odot$ denotes element-wise multiplication. We initialize input and recurrent weights via Xavier uniform initialization and set the initial forget-gate bias to $b_f = +1.0$ so the network defaults to retaining multi-horizon momentum memory early in training before selectively pruning noisy signals.</p>
+<h4 id="Methodological-Design:-Stationary-Return-Forecasting-vs.-Price-Level-Forecasting">Methodological Design: Stationary Return Forecasting vs. Price-Level Forecasting<a class="anchor-link" href="#Methodological-Design:-Stationary-Return-Forecasting-vs.-Price-Level-Forecasting">¶</a></h4><p>Because portfolio optimization in <code>skfin</code> requires forecasting <em>stationary next-day returns</em> $y_t = r_{t+1}$ rather than non-stationary commodity price levels $P_t$, architectural parsimony is essential:</p>
 <ul>
-<li><strong>Why High-Capacity Price-Level Models Overfit Returns</strong>: <strong>Ben Ameur et al. (2024, Table 1, p. 355)</strong> train a 100-unit LSTM for 100 epochs (batch size <code>512</code>, global <code>Min-Max</code> scaling on a static 80%/20% split) to forecast <em>non-stationary commodity index price levels</em> $P_t$, reporting $R^2 \in [0.97, 0.99]$ because unit-root price levels satisfy $P_{t} \approx P_{t-1}$ (their Fig. 5, p. 359). However, mean-variance portfolio construction in <code>skfin</code> requires forecasting <em>stationary next-day returns</em> $y_t = r_{t+1}$, where the daily signal-to-noise ratio is tiny and a 100-unit network rapidly memorizes in-sample noise.</li>
-<li><strong>Compact Deep Momentum Network Design</strong>: Following <strong>Lim et al. (2019, Section IV-B &amp; Exhibit 9, p. 17)</strong> and <strong>Wood et al. (2022, Appendix C, Exhibit 15, p. 20)</strong>, our <code>CommodityLSTM</code> and <code>PyTorchLSTMRegressor</code> wrapper enforce five strict anti-overfitting safeguards:<ol>
+<li><strong>Why High-Capacity Price-Level Networks Overfit Returns</strong>: Deep networks designed to forecast non-stationary commodity index price levels can use large hidden layers (e.g., 100 LSTM units and global min-max scaling) and achieve near-unity $R^2$ because unit-root price levels satisfy $P_t \approx P_{t-1}$ (Ben Ameur et al., 2024). On stationary daily returns, however, the signal-to-noise ratio is orders of magnitude lower, causing high-capacity networks to memorize in-sample noise.</li>
+<li><strong>Compact Deep Momentum Network Safeguards</strong>: Our <code>CommodityLSTM</code> and <code>PyTorchLSTMRegressor</code> wrapper therefore enforce five anti-overfitting mechanisms tailored to noisy return series (Lim et al., 2019; Wood et al., 2022):<ol>
 <li><strong>Constrained Capacity (<code>hidden_size=8</code>, <code>num_layers=1</code>)</strong>: Limits the recurrent bottleneck to 8 hidden units mapping the $(L \times 25)$ multi-horizon momentum sequence to the 5-ETF return forecast $\hat{y}_t \in \mathbb{R}^5$.</li>
 <li><strong>Dropout &amp; $L_2$ Weight Decay</strong>: Applies dropout ($p = 0.2$) to the final recurrent hidden state $h_t$ before the linear readout layer, paired with Adam $L_2$ weight decay ($10^{-3}$) to shrink noisy weights toward zero.</li>
-<li><strong>Tail-Robust Huber Loss ($\delta = 0.01$)</strong>: Whereas <strong>Lim et al. (2019, Exhibit 3, p. 9)</strong> note that standard MSE regression (<code>LSTM - MSE</code>) is sensitive to outlier return spikes, Huber loss is quadratic for small residuals ($|e| \le \delta$) and linear in the tails ($|e| &gt; \delta$), preventing extreme commodity shocks (such as <code>USO</code>'s <code>-25.32%</code> crash in April 2020) from dominating parameter updates.</li>
+<li><strong>Tail-Robust Huber Loss ($\delta = 0.01$)</strong>: Unlike standard MSE regression—which is highly sensitive to extreme return spikes (Lim et al., 2019)—Huber loss is quadratic for small residuals ($|e| \le \delta$) and linear in the tails ($|e| &gt; \delta$), preventing extreme commodity shocks (such as <code>USO</code>'s <code>-25.32%</code> crash in April 2020) from dominating parameter updates.</li>
 <li><strong>Chronological Early Stopping &amp; Leak-Free Scaling</strong>: Feature scaling (<code>StandardScaler(with_mean=False)</code>) is fit strictly within each 3-year rolling training fold (<code>max_train_size=756</code>), and early stopping (<code>patience=5</code>) monitors validation loss on the chronological final 15% of the training window without shuffling.</li>
 <li><strong>Seamless Walk-Forward Sequence Buffering (<code>_history_X</code>)</strong>: Inside <code>PyTorchLSTMRegressor.fit()</code>, the final <code>lookback - 1</code> rows of each training fold are cached in <code>_history_X</code> and prepended during <code>predict(X_test)</code> so that even the very first day of each 21-day out-of-sample test fold has a complete $L$-day lookback sequence without look-ahead leakage.</li>
 </ol>
@@ -8165,7 +8165,7 @@ where $\sigma(\cdot)$ is the logistic sigmoid and $\odot$ denotes element-wise m
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=55e3294f">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=30930db8">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8248,14 +8248,14 @@ where $\sigma(\cdot)$ is the logistic sigmoid and $\odot$ denotes element-wise m
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c0114da4">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=54822189">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="6.-Random-Search-Hyperparameter-Optimization-within-the-Backtester">6. Random Search Hyperparameter Optimization within the Backtester<a class="anchor-link" href="#6.-Random-Search-Hyperparameter-Optimization-within-the-Backtester">¶</a></h2><h3 id="6.1-Calibration-Window-Setup-(Preventing-Test-Period-Data-Snooping)">6.1 Calibration Window Setup (Preventing Test-Period Data Snooping)<a class="anchor-link" href="#6.1-Calibration-Window-Setup-(Preventing-Test-Period-Data-Snooping)">¶</a></h3><p>As demonstrated in course module <code>19_Hyperparameter_optimisation.ipynb</code> and the deep momentum literature (<strong>Lim, Zohren &amp; Roberts, 2019, Section IV-B, p. 7 &amp; Appendix B, Exhibit 9, p. 17</strong>; <strong>Wood, Giegerich, Roberts &amp; Zohren, 2022, Section VI-A, p. 6 &amp; Appendix C, Exhibits 15–16, pp. 19–20</strong>), tuning neural network hyperparameters on the test window (2020–2026) induces severe backtest overfitting.</p>
-<p>Following <strong>Lim et al. (2019)</strong> and <strong>Wood et al. (2022)</strong>—who calibrate their LSTM hidden dimension, dropout rate ($[0.1, 0.5]$), learning rate ($10^{-4}$ to $10^{-2}$), and sequence length via <strong>Random Search</strong> on historical blocks prior to out-of-sample evaluation—we embed a <strong>Random Parameter Search</strong> directly inside <code>skfin.backtesting.Backtester</code> over an earlier strictly pre-test calibration window (<strong>2012–2019</strong>):</p>
+<h2 id="6.-Random-Search-Hyperparameter-Optimization-within-the-Backtester">6. Random Search Hyperparameter Optimization within the Backtester<a class="anchor-link" href="#6.-Random-Search-Hyperparameter-Optimization-within-the-Backtester">¶</a></h2><h3 id="6.1-Calibration-Window-Setup-(Preventing-Test-Period-Data-Snooping)">6.1 Calibration Window Setup (Preventing Test-Period Data Snooping)<a class="anchor-link" href="#6.1-Calibration-Window-Setup-(Preventing-Test-Period-Data-Snooping)">¶</a></h3><p>Tuning neural network hyperparameters directly on the out-of-sample test window (2020–2026) would induce severe data snooping and backtest overfitting (<code>19_Hyperparameter_optimisation.ipynb</code>; Lim et al., 2019; Wood et al., 2022).</p>
+<p>To calibrate model capacity, sequence length, dropout rate, learning rate, and weight decay strictly prior to the test period, we embed a <strong>Random Parameter Search</strong> inside <code>skfin.backtesting.Backtester</code> over an earlier historical calibration window (<strong>2012–2019</strong>) (Lim et al., 2019; Wood et al., 2022):</p>
 <ul>
 <li>We define continuous and discrete prior distributions over <code>hidden_size</code> ($\{6, \dots, 16\}$), <code>lookback</code> ($\{15, \dots, 44\}$ business days), <code>weight_decay</code> ($\text{loguniform}(10^{-4}, 5 \times 10^{-3})$), <code>dropout</code> ($\text{uniform}(0.10, 0.35)$), and <code>lr</code> ($\text{loguniform}(5 \times 10^{-4}, 2 \times 10^{-3})$) using <code>scipy.stats</code>.</li>
 <li>We draw 15 random parameter configurations using <code>sklearn.model_selection.ParameterSampler</code>.</li>
@@ -8266,7 +8266,7 @@ where $\sigma(\cdot)$ is the logistic sigmoid and $\odot$ denotes element-wise m
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=da499391">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=6e4ec962">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8462,7 +8462,7 @@ where $\sigma(\cdot)$ is the logistic sigmoid and $\odot$ denotes element-wise m
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7df97763">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3b81b883">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8473,11 +8473,11 @@ where $\sigma(\cdot)$ is the logistic sigmoid and $\odot$ denotes element-wise m
 <li>The cumulative maximum Sharpe ratio across the 15 Random Search trials over <strong>2012–2019</strong>.</li>
 <li>The $t$-statistic correlation between hyperparameter values and calibration Sharpe ratio ($t = \rho \cdot \sqrt{N}$).</li>
 </ol>
-<p><strong>Regime-Dependent Hyperparameter Insight (<code>2012–2019</code> vs. <code>2020–2026</code>)</strong>: Notice that during the quiet, range-bound <strong>2012–2019</strong> calibration regime, longer sequence lengths (<code>lookback</code>) correlate positively with in-sample Sharpe ratio while strong $L_2$ shrinkage (<code>weight_decay</code>) correlates negatively—causing Random Search to select <strong>Trial 9</strong> (<code>lookback=32</code>, <code>hidden_size=9</code>, light <code>weight_decay=0.00034</code>, in-sample SR <code>0.653</code>). As <strong>Wood, Giegerich, Roberts &amp; Zohren (2022, Section VI-A, p. 7 &amp; p. 9)</strong> demonstrate in their analysis of the 2020 SARS-CoV-2 crash, LSTMs configured with longer sequence windows perform well in tranquil pre-2020 markets but suffer severe lag when abrupt macroeconomic regime shifts occur—a structural vulnerability we directly test in Sections 7 and 8.</p>
+<p><strong>Regime-Dependent Hyperparameter Insight (<code>2012–2019</code> vs. <code>2020–2026</code>)</strong>: During the quiet, range-bound <strong>2012–2019</strong> calibration regime, longer sequence lengths (<code>lookback</code>) correlate positively with in-sample Sharpe ratio while strong $L_2$ shrinkage (<code>weight_decay</code>) correlates negatively—causing Random Search to select <strong>Trial 9</strong> (<code>lookback=32</code>, <code>hidden_size=9</code>, light <code>weight_decay=0.00034</code>, in-sample SR <code>0.653</code>). However, longer LSTM sequence windows calibrated on tranquil pre-2020 markets are vulnerable to severe memory lag when abrupt macroeconomic regime shifts occur, a structural hypothesis we directly test in Sections 7 and 8 (Wood et al., 2022).</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8755e0b1">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a5754bd1">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8520,26 +8520,26 @@ where $\sigma(\cdot)$ is the logistic sigmoid and $\odot$ denotes element-wise m
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4bef8ded">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=671a8ca4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="7.-Out-of-Sample-Walk-Forward-Backtesting-(2020%E2%80%932026)">7. Out-of-Sample Walk-Forward Backtesting (2020–2026)<a class="anchor-link" href="#7.-Out-of-Sample-Walk-Forward-Backtesting-(2020%E2%80%932026)">¶</a></h2><p>We now evaluate the commodity ETF strategies over the strictly out-of-sample period (<strong>2020–2026</strong>). As highlighted by <strong>Ben Ameur et al. (2024, Section 3.2, p. 360, Footnote 3)</strong> and <strong>Wood, Giegerich, Roberts &amp; Zohren (2022, Section VI-A, pp. 6–9)</strong>, the post-2020 period represents a severe macroeconomic stress test encompassing the March–April 2020 COVID-19 demand collapse, the 2021–2022 global supply-chain and Russia-Ukraine commodity shock, and the 2022–2026 interest-rate tightening cycle.</p>
+<h2 id="7.-Out-of-Sample-Walk-Forward-Backtesting-(2020%E2%80%932026)">7. Out-of-Sample Walk-Forward Backtesting (2020–2026)<a class="anchor-link" href="#7.-Out-of-Sample-Walk-Forward-Backtesting-(2020%E2%80%932026)">¶</a></h2><p>We now evaluate the commodity ETF strategies over the strictly out-of-sample period (<strong>2020–2026</strong>). This six-year window provides a demanding macroeconomic stress test encompassing the March–April 2020 COVID-19 demand collapse, the 2021–2022 global supply-chain and Russia-Ukraine commodity shock, and the 2022–2026 interest-rate tightening cycle (Wood et al., 2022; Ben Ameur et al., 2024).</p>
 <p>To isolate the effects of (i) <strong>multi-horizon momentum features (<code>X_mom</code>) vs. raw returns (<code>X_raw</code>)</strong> and (ii) <strong>sequence length and $L_2$ regularization under regime shifts</strong>, we compare six strategies scaled to a uniform 10% annualized volatility target (<code>TARGET_VOL</code>):</p>
 <ol>
-<li><strong>Simple Momentum (<code>252d</code>)</strong>: Canonical 12-month time-series momentum benchmark (<strong>Moskowitz, Ooi &amp; Pedersen, 2012, Eq. 5, p. 236</strong>).</li>
-<li><strong>Simple Momentum (<code>1d</code>)</strong>: Short-term 1-day return continuation benchmark (<strong>Lim, Zohren &amp; Roberts, 2019, Section V-B.1, p. 7</strong>).</li>
+<li><strong>Simple Momentum (<code>252d</code>)</strong>: Canonical 12-month time-series momentum benchmark (Moskowitz et al., 2012).</li>
+<li><strong>Simple Momentum (<code>1d</code>)</strong>: Short-term 1-day return continuation benchmark (Lim et al., 2019).</li>
 <li><strong>Ridge Baseline</strong>: Fixed-alpha (<code>alpha=100.0</code>) penalized linear model on raw returns.</li>
-<li><strong>Default LSTM</strong>: Unregularized/lightly regularized sequence model (<code>hidden_size=16</code>, <code>lookback=60</code>, <code>weight_decay=1e-4</code>) fed with raw 1-day returns (<code>X_raw</code>).</li>
+<li><strong>Default LSTM</strong>: Lightly regularized sequence model (<code>hidden_size=16</code>, <code>lookback=60</code>, <code>weight_decay=1e-4</code>) fed with raw 1-day returns (<code>X_raw</code>).</li>
 <li><strong>Random Search In-Sample Winner (<code>In-Sample Best LSTM</code>)</strong>: Trial 9 from Section 6 (<code>hidden_size=9</code>, <code>lookback=32</code>, <code>weight_decay=0.00034</code>, <code>dropout=0.253</code>, calibrated on the quiet <code>2012–2019</code> regime) fed with multi-horizon momentum (<code>X_mom</code>).</li>
-<li><strong>Compact Regularized LSTM</strong>: Parsimonious, short-memory sequence architecture (<code>hidden_size=8</code>, <code>lookback=20</code>, <code>weight_decay=1e-3</code>, <code>dropout=0.20</code>) fed with multi-horizon momentum (<code>X_mom</code>), designed in accordance with <strong>Wood et al. (2022, Section VI-A, p. 9)</strong> to adapt rapidly across momentum turning points.</li>
+<li><strong>Compact Regularized LSTM</strong>: Parsimonious, short-memory sequence architecture (<code>hidden_size=8</code>, <code>lookback=20</code>, <code>weight_decay=1e-3</code>, <code>dropout=0.20</code>) fed with multi-horizon momentum (<code>X_mom</code>), designed to adapt rapidly across momentum turning points (Wood et al., 2022).</li>
 </ol>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3c1df804">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3ccb7e19">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8586,7 +8586,7 @@ where $\sigma(\cdot)$ is the logistic sigmoid and $\odot$ denotes element-wise m
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0c1f908c">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ca10962b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8699,7 +8699,7 @@ where $\sigma(\cdot)$ is the logistic sigmoid and $\odot$ denotes element-wise m
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bba8edaa">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=55ee8477">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8707,12 +8707,12 @@ where $\sigma(\cdot)$ is the logistic sigmoid and $\odot$ denotes element-wise m
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h3 id="7.1-Cumulative-Out-of-Sample-Performance-Comparison-&amp;-Dynamic-Holdings">7.1 Cumulative Out-of-Sample Performance Comparison &amp; Dynamic Holdings<a class="anchor-link" href="#7.1-Cumulative-Out-of-Sample-Performance-Comparison-&amp;-Dynamic-Holdings">¶</a></h3><p>We plot cumulative return trajectories for all six strategies on the out-of-sample period (<strong>2020–2026</strong>) and inspect the dynamic portfolio holdings $h_t$ of the <strong>Compact Regularized LSTM</strong>.</p>
 <ul>
-<li><strong>Dynamic Cross-Sector Allocation</strong>: Consistent with <strong>Moskowitz, Ooi &amp; Pedersen (2012, Section 3.3, p. 238)</strong> and <strong>Ben Ameur et al. (2024, Section 3.2, pp. 360–363)</strong>, the holdings plot illustrates how the Compact Regularized LSTM actively rotates exposure across Energy (<code>USO</code>, <code>DBC</code>), Agriculture (<code>DBA</code>), and Precious Metals (<code>GLD</code>, <code>SLV</code>) as inflation and supply-shock regimes evolve between 2020 and 2026.</li>
+<li><strong>Dynamic Cross-Sector Allocation</strong>: Our holdings plot illustrates how the Compact Regularized LSTM actively rotates exposure across Energy (<code>USO</code>, <code>DBC</code>), Agriculture (<code>DBA</code>), and Precious Metals (<code>GLD</code>, <code>SLV</code>) as inflation and supply-shock regimes evolve between 2020 and 2026 (Moskowitz et al., 2012; Ben Ameur et al., 2024).</li>
 </ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=96c55775">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e5b047c4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8759,31 +8759,31 @@ where $\sigma(\cdot)$ is the logistic sigmoid and $\odot$ denotes element-wise m
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d614d1ef">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ea5080bf">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="7.2-Strategy-Performance-Summary-Metrics-(Gross)-&amp;-Literature-Comparison">7.2 Strategy Performance Summary Metrics (Gross) &amp; Literature Comparison<a class="anchor-link" href="#7.2-Strategy-Performance-Summary-Metrics-(Gross)-&amp;-Literature-Comparison">¶</a></h3><p>We quantify annualized return, annualized volatility, gross Sharpe ratio, maximum drawdown, and annualized turnover across all six strategies.</p>
-<h4 id="Empirical-Synthesis-with-Literature-Benchmarks">Empirical Synthesis with Literature Benchmarks<a class="anchor-link" href="#Empirical-Synthesis-with-Literature-Benchmarks">¶</a></h4><ol>
+<h3 id="7.2-Strategy-Performance-Summary-Metrics-(Gross)">7.2 Strategy Performance Summary Metrics (Gross)<a class="anchor-link" href="#7.2-Strategy-Performance-Summary-Metrics-(Gross)">¶</a></h3><p>We quantify annualized return, annualized volatility, gross Sharpe ratio, maximum drawdown, and annualized turnover across all six strategies.</p>
+<h4 id="Empirical-Interpretation-of-Strategy-Metrics">Empirical Interpretation of Strategy Metrics<a class="anchor-link" href="#Empirical-Interpretation-of-Strategy-Metrics">¶</a></h4><ol>
 <li><strong>Strength of the Canonical 12-Month TSMOM Benchmark (<code>Gross SR = 0.77</code>)</strong>:<ul>
-<li>Confirming <strong>Moskowitz, Ooi &amp; Pedersen (2012, Table 2 &amp; Fig. 3, pp. 235–238)</strong>, <code>Simple Momentum (252d)</code> delivers a solid out-of-sample <strong>Gross Sharpe of <code>0.77</code></strong> (<code>8.32%</code> annualized return, <code>-18.88%</code> max drawdown) with very low annualized turnover (<code>13.45</code>), outperforming <code>Simple Momentum (1d)</code> (<code>Gross SR = 0.67</code>, turnover <code>314.81</code>) and <code>Ridge Baseline</code> (<code>Gross SR = 0.34</code>, turnover <code>315.48</code>).</li>
+<li>Our <code>Simple Momentum (252d)</code> baseline delivers a solid out-of-sample <strong>Gross Sharpe of <code>0.77</code></strong> (<code>8.32%</code> annualized return, <code>-18.88%</code> max drawdown) with very low annualized turnover (<code>13.45</code>), outperforming <code>Simple Momentum (1d)</code> (<code>Gross SR = 0.67</code>, turnover <code>314.81</code>) and <code>Ridge Baseline</code> (<code>Gross SR = 0.34</code>, turnover <code>315.48</code>) and confirming that 12-month trend continuation is a strong linear benchmark in commodity markets (Moskowitz et al., 2012).</li>
 </ul>
 </li>
 <li><strong>Why Raw Daily Returns in a Long-Window LSTM Underperform (<code>Default LSTM</code>, <code>Gross SR = 0.23</code>)</strong>:<ul>
-<li>Feeding raw 1-day returns (<code>X_raw</code>) into a 60-day, 16-unit LSTM (<code>Default LSTM</code>) produces an out-of-sample <strong>Gross Sharpe of only <code>0.23</code></strong> and high turnover (<code>194.28</code>). This corroborates <strong>Lim, Zohren &amp; Roberts (2019, Section V-B.1, p. 7)</strong>, who show that multi-timescale momentum normalization (<code>5d–252d</code>) is essential for recurrent networks to extract persistent trend signals from noisy daily returns.</li>
+<li>Feeding raw 1-day returns (<code>X_raw</code>) into a 60-day, 16-unit LSTM (<code>Default LSTM</code>) produces an out-of-sample <strong>Gross Sharpe of only <code>0.23</code></strong> and high turnover (<code>194.28</code>), demonstrating that multi-timescale momentum normalization (<code>5d–252d</code>) is essential for recurrent networks to extract persistent trend signals from noisy daily returns (Lim et al., 2019).</li>
 </ul>
 </li>
 <li><strong>Superior Risk-Adjusted Return &amp; Drawdown Control of the Compact Regularized LSTM (<code>Gross SR = 1.27</code>)</strong>:<ul>
-<li>Combining multi-horizon momentum features (<code>X_mom</code>) with a compact 20-day lookback and strong $L_2$ weight decay (<code>1e-3</code>) boosts the out-of-sample <strong>Gross Sharpe ratio to <code>1.27</code></strong> (<code>12.23%</code> annualized return at <code>9.63%</code> volatility) while cutting <strong>Maximum Drawdown nearly in half (<code>-10.30%</code> vs. <code>-18.88%</code> for 252d Momentum)</strong>. This aligns directly with <strong>Lim, Zohren &amp; Roberts (2019, Exhibit 3, p. 9)</strong>—where regression-trained LSTMs (<code>LSTM - MSE</code>, Gross SR <code>0.791</code>) and Sharpe-optimized LSTMs (<code>1.233</code>) outperform linear TSMOM across commodity futures—and with <strong>Ben Ameur et al. (2024, Table 6, p. 361)</strong>, who document that LSTMs achieve the lowest out-of-sample forecast errors across all commodity indices during the post-2020 pandemic and war periods.</li>
+<li>Combining multi-horizon momentum features (<code>X_mom</code>) with a compact 20-day lookback and strong $L_2$ weight decay (<code>1e-3</code>) boosts the out-of-sample <strong>Gross Sharpe ratio to <code>1.27</code></strong> (<code>12.23%</code> annualized return at <code>9.63%</code> volatility) while cutting <strong>Maximum Drawdown nearly in half (<code>-10.30%</code> vs. <code>-18.88%</code> for 252d Momentum)</strong>, showing that a properly regularized LSTM captures nonlinear post-2020 commodity dynamics more effectively than linear benchmarks (Lim et al., 2019; Ben Ameur et al., 2024).</li>
 </ul>
 </li>
 </ol>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=511e8f31">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fc3ae264">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8937,35 +8937,34 @@ where $\sigma(\cdot)$ is the logistic sigmoid and $\odot$ denotes element-wise m
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6cd8573b">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ef04c4ab">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="8.-Robustness:-Multi-Seed-Ensembling,-Historical-Subperiods-&amp;-Training-Window-Sensitivity">8. Robustness: Multi-Seed Ensembling, Historical Subperiods &amp; Training-Window Sensitivity<a class="anchor-link" href="#8.-Robustness:-Multi-Seed-Ensembling,-Historical-Subperiods-&amp;-Training-Window-Sensitivity">¶</a></h2><h3 id="8.1-Multi-Seed-Sensitivity-&amp;-Seed-Ensembling">8.1 Multi-Seed Sensitivity &amp; Seed Ensembling<a class="anchor-link" href="#8.1-Multi-Seed-Sensitivity-&amp;-Seed-Ensembling">¶</a></h3><p>Deep neural networks rely on stochastic weight initialization (<code>xavier_uniform_</code>) and mini-batch gradient updates. Following course methodology (<code>nbs/16_Trees_Neural_nets.ipynb</code>, Cell 52; <code>nbs/29_Ensemble.ipynb</code>) and the <strong>5-run experimental protocol of Wood, Giegerich, Roberts &amp; Zohren (2022, Section VI-A, p. 6 &amp; Exhibit 4, p. 8)</strong>:</p>
+<h2 id="8.-Robustness:-Multi-Seed-Ensembling,-Historical-Subperiods-&amp;-Training-Window-Sensitivity">8. Robustness: Multi-Seed Ensembling, Historical Subperiods &amp; Training-Window Sensitivity<a class="anchor-link" href="#8.-Robustness:-Multi-Seed-Ensembling,-Historical-Subperiods-&amp;-Training-Window-Sensitivity">¶</a></h2><h3 id="8.1-Multi-Seed-Sensitivity-&amp;-Seed-Ensembling">8.1 Multi-Seed Sensitivity &amp; Seed Ensembling<a class="anchor-link" href="#8.1-Multi-Seed-Sensitivity-&amp;-Seed-Ensembling">¶</a></h3><p>Deep neural networks rely on stochastic weight initialization (<code>xavier_uniform_</code>) and mini-batch gradient updates. To account for initialization variance (<code>nbs/16_Trees_Neural_nets.ipynb</code>; <code>nbs/29_Ensemble.ipynb</code>; Gu et al., 2020; Wood et al., 2022):</p>
 <ol>
 <li>We evaluate the out-of-sample distribution of Sharpe ratios across <strong>5 independent random seeds (<code>42, 101, 2024, 7, 999</code>)</strong> for the <strong>Compact Regularized LSTM</strong>.</li>
-<li>Following <strong>Wood et al. (2022, Section VII, p. 13)</strong>, we construct an equal-weighted <strong>Seed Ensemble</strong> (averaging portfolio holdings $h_t = \frac{1}{5}\sum_{k=1}^{5} h_t^{(k)}$ and returns across seeds), which averages out idiosyncratic initialization variance and cuts annualized turnover nearly in half (<code>64.75</code> vs. <code>125.95</code>).</li>
+<li>We construct an equal-weighted <strong>Seed Ensemble</strong> (averaging portfolio holdings $h_t = \frac{1}{5}\sum_{k=1}^{5} h_t^{(k)}$ and returns across seeds), which averages out idiosyncratic initialization variance and cuts annualized turnover nearly in half (<code>64.75</code> vs. <code>125.95</code>) (Gu et al., 2020; Wood et al., 2022).</li>
 </ol>
-<h4 id="Theoretical-&amp;-Empirical-Explanation-of-the-Regime-Shift-Finding-(lookback=32-vs.-lookback=20)">Theoretical &amp; Empirical Explanation of the Regime-Shift Finding (<code>lookback=32</code> vs. <code>lookback=20</code>)<a class="anchor-link" href="#Theoretical-&amp;-Empirical-Explanation-of-the-Regime-Shift-Finding-(lookback=32-vs.-lookback=20)">¶</a></h4><p>Our comparison between the <strong>In-Sample Random Search Winner (<code>lookback=32, wd=3.4e-4</code>)</strong> and the <strong>Compact Regularized LSTM (<code>lookback=20, wd=1e-3</code>)</strong> provides a textbook empirical demonstration of the regime-shift mechanism analyzed by <strong>Wood, Giegerich, Roberts &amp; Zohren (2022, Exhibit 3, p. 7 &amp; Section VI-A, p. 9)</strong>:</p>
+<h4 id="Theoretical-&amp;-Empirical-Explanation-of-the-Regime-Shift-Finding-(lookback=32-vs.-lookback=20)">Theoretical &amp; Empirical Explanation of the Regime-Shift Finding (<code>lookback=32</code> vs. <code>lookback=20</code>)<a class="anchor-link" href="#Theoretical-&amp;-Empirical-Explanation-of-the-Regime-Shift-Finding-(lookback=32-vs.-lookback=20)">¶</a></h4><p>Our comparison between the <strong>In-Sample Random Search Winner (<code>lookback=32, wd=3.4e-4</code>)</strong> and the <strong>Compact Regularized LSTM (<code>lookback=20, wd=1e-3</code>)</strong> highlights how sequence memory length interacts with macroeconomic structural breaks:</p>
 <ul>
 <li><strong>Why Longer LSTM Sequence Windows Struggle at Post-2020 Turning Points</strong>:<ul>
-<li>In <strong>Wood et al. (2022, Exhibit 3, p. 7, <code>SARS-CoV-2</code> panel &amp; Appendix C, Exhibit 15, p. 20)</strong>, an LSTM configured with a longer sequence length ($\tau = 63$ days) achieved a strong Sharpe ratio of <code>0.82</code> over <code>2015–2020</code>, but its Sharpe ratio collapsed to <strong><code>-1.50</code> during the 2020 SARS-CoV-2 market crash</strong>.</li>
-<li>As <strong>Wood et al. (2022, Abstract, p. 1 &amp; Section VI-A, p. 9)</strong> explain, <em>"the LSTM is better suited to exploiting short term patterns"</em> because recurrent hidden states propagate sequentially step-by-step; when an abrupt macroeconomic structural break hits (<em>a momentum turning point</em>), a long recurrent window continues carrying pre-crash memory states and accumulates prediction errors.</li>
-<li>We observe this exact phenomenon in our commodity ETF backtest: during the tranquil <strong>2012–2019</strong> calibration window, Random Search favored a longer 32-day sequence window (<code>lookback=32</code>) and weak weight decay (<code>3.4e-4</code>), yielding an in-sample Sharpe of <strong><code>0.65</code></strong>. However, when exposed to the extreme <strong>2020–2026</strong> regime shifts (negative WTI oil in April 2020, the 2022 Russia-Ukraine supply shock, and rapid central bank rate hikes), the <code>lookback=32</code> model suffered severe regime lag (single-seed OOS SR <strong><code>-0.07</code></strong>, 5-seed ensemble OOS SR <strong><code>0.32</code></strong>).</li>
+<li>Recurrent hidden states propagate sequentially step-by-step; when an abrupt macroeconomic structural break hits (<em>a momentum turning point</em>), a long recurrent window continues carrying pre-crash memory states and accumulates prediction errors, making standard LSTMs better suited to exploiting shorter-term sequential patterns during crisis transitions (Wood et al., 2022).</li>
+<li>In our commodity ETF backtest, Random Search on the tranquil <strong>2012–2019</strong> calibration window favored a longer 32-day sequence window (<code>lookback=32</code>) and weak weight decay (<code>3.4e-4</code>), yielding an in-sample Sharpe of <strong><code>0.65</code></strong>. However, when exposed to the extreme <strong>2020–2026</strong> regime shifts (negative WTI oil in April 2020, the 2022 Russia-Ukraine supply shock, and rapid central bank rate hikes), the <code>lookback=32</code> model suffered severe regime lag (single-seed OOS SR <strong><code>-0.07</code></strong>, 5-seed ensemble OOS SR <strong><code>0.32</code></strong>), mirroring the sharp performance drop observed for longer-window LSTMs during the 2020 SARS-CoV-2 crash (Wood et al., 2022).</li>
 </ul>
 </li>
 <li><strong>Why the Compact <code>lookback=20</code> LSTM &amp; Seed Ensemble Excel (<code>Ensemble Gross SR = 0.81</code>)</strong>:<ul>
 <li>Constraining the recurrent memory window to <strong><code>lookback=20</code> business days ($\approx 1$ trading month)</strong> alongside strong $L_2$ weight decay (<code>1e-3</code>) forces the LSTM cell state to flush stale pre-shock dynamics within four trading weeks while still accessing the full 1-week to 12-month momentum term structure at each step via <code>X_mom</code> (<code>5d, 21d, 63d, 126d, 252d</code>).</li>
-<li>Across all 5 random seeds, every individual run is strictly positive out-of-sample (Sharpe ratios ranging from <code>0.40</code> to <code>1.27</code>, mean <code>0.69 ± 0.32</code>), and the <strong>5-Seed Ensemble achieves a Gross Sharpe Ratio of <code>0.81</code> (<code>0.806</code>)</strong>—closely matching <strong>Lim, Zohren &amp; Roberts' (2019, Exhibit 3, p. 9)</strong> benchmark <code>LSTM - MSE</code> rescaled Sharpe ratio of <strong><code>0.791</code></strong> across futures and outperforming <strong>Moskowitz et al.'s (2012)</strong> 252-day Simple Momentum (<code>0.77</code>).</li>
+<li>Across all 5 random seeds, every individual run is strictly positive out-of-sample (Sharpe ratios ranging from <code>0.40</code> to <code>1.27</code>, mean <code>0.69 ± 0.32</code>), and the <strong>5-Seed Ensemble achieves a Gross Sharpe Ratio of <code>0.81</code> (<code>0.806</code>)</strong>—closely aligning with empirical Sharpe ratios reported for regression-trained LSTMs on commodity futures and outperforming our 252-day Simple Momentum baseline (<code>0.77</code>) (Moskowitz et al., 2012; Lim et al., 2019).</li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=55221d0d">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=22992f20">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9100,14 +9099,14 @@ LSTM Seed Ensemble Sharpe: 0.809 (~0.81)
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4026ada3">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=42f0b956">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="8.2-Historical-Subperiod-Regimes,-Adapted-Training-Windows-&amp;-$2-%5Ctimes-2$-Ablation">8.2 Historical Subperiod Regimes, Adapted Training Windows &amp; $2 \times 2$ Ablation<a class="anchor-link" href="#8.2-Historical-Subperiod-Regimes,-Adapted-Training-Windows-&amp;-$2-%5Ctimes-2$-Ablation">¶</a></h3><p>A key question in empirical asset pricing is how sequence models perform across <strong>earlier historical market regimes</strong> and <strong>adapted rolling training window lengths</strong> (<code>max_train_size</code>), as well as how much of the out-of-sample gain stems from <strong>multi-horizon momentum features (<code>X_mom</code>)</strong> versus the <strong>compact regularized architecture (<code>lookback=20, hidden_size=8, wd=1e-3</code>)</strong>.</p>
-<p>Following the multi-window walk-forward evaluation design of <strong>Lim, Zohren &amp; Roberts (2019, Section V-A, p. 7)</strong> and <strong>Wood, Giegerich, Roberts &amp; Zohren (2022, Section VI-A, Exhibit 1, p. 6)</strong>, we conduct two additional experiments starting in <strong>January 2013</strong> (the earliest date where a 5-year rolling training window <code>max_train_size=1260</code> has full multi-horizon momentum history <code>X_mom</code> from December 2007):</p>
+<h3 id="8.2-Historical-Subperiod-Regimes,-Adapted-Training-Windows-&amp;-$2-%5Ctimes-2$-Ablation">8.2 Historical Subperiod Regimes, Adapted Training Windows &amp; $2 \times 2$ Ablation<a class="anchor-link" href="#8.2-Historical-Subperiod-Regimes,-Adapted-Training-Windows-&amp;-$2-%5Ctimes-2$-Ablation">¶</a></h3><p>We next examine how our sequence models perform across <strong>earlier historical market regimes</strong> and <strong>adapted rolling training window lengths</strong> (<code>max_train_size</code>), and isolate how much of the out-of-sample gain stems from <strong>multi-horizon momentum features (<code>X_mom</code>)</strong> versus the <strong>compact regularized architecture (<code>lookback=20, hidden_size=8, wd=1e-3</code>)</strong>.</p>
+<p>We conduct two additional experiments starting in <strong>January 2013</strong> (the earliest date where a 5-year rolling training window <code>max_train_size=1260</code> has full multi-horizon momentum history <code>X_mom</code> from December 2007) (Lim et al., 2019; Wood et al., 2022):</p>
 <ol>
 <li><strong>Multi-Regime &amp; Training-Window Sensitivity (<code>2013–2026</code>)</strong>:<ul>
 <li>We evaluate walk-forward backtests across three distinct macroeconomic regimes:<ul>
@@ -9127,13 +9126,13 @@ LSTM Seed Ensemble Sharpe: 0.809 (~0.81)
 </ol>
 <h4 id="Key-Empirical-Takeaways-from-Tables-8.2a-&amp;-8.2b">Key Empirical Takeaways from Tables 8.2a &amp; 8.2b<a class="anchor-link" href="#Key-Empirical-Takeaways-from-Tables-8.2a-&amp;-8.2b">¶</a></h4><ul>
 <li><strong>Training Window Bias–Variance &amp; Stationarity Trade-Off (<code>2y</code> vs. <code>3y</code> vs. <code>5y</code>)</strong>: Across both the <code>2020–2026</code> test period (<code>SR = 1.27</code>) and the full 13-year <code>2013–2026</code> sample (<code>SR = 0.68</code>, outperforming <code>Simple Momentum 252d</code> at <code>0.61</code>), the <strong>3-Year Rolling Window (<code>756d</code>)</strong> is the clear optimum. A <strong>2-Year Window (<code>504d</code>)</strong> adapts well during the volatile <code>2020–2026</code> regime (<code>SR = 0.99</code>) but suffers from small-sample estimation variance in quieter periods (<code>2013–2019</code>), whereas a <strong>5-Year Window (<code>1260d</code>)</strong> suffers from severe <strong>regime staleness</strong> (<code>2020–2026</code> SR drops to <code>0.34</code> because 5-year training folds during 2020–2022 are dominated by pre-COVID 2015–2019 range-bound observations).</li>
-<li><strong>Subperiod Regime Dynamics (<code>2013–2015</code> vs. <code>2016–2019</code> vs. <code>2020–2026</code>)</strong>: During the slow, persistent <strong>2013–2015 commodity bear market</strong>, the longer-memory <code>Pre-2020 Calibrated LSTM (lb=32)</code> achieved the highest Sharpe ratio (<code>0.76</code> vs. <code>0.63</code> for <code>252d Momentum</code>). During the <strong>2016–2019 sideways market</strong>, all trend strategies faced headwinds (<strong>Wood et al., 2022, p. 6</strong>), with <code>252d Momentum</code> at <code>0.26</code> and <code>Pre-2020 LSTM</code> at <code>0.05</code>. Conversely, during the V-shaped macro shocks of <strong>2020–2026</strong>, the short-memory <code>Compact LSTM (lb=20, 3y Win)</code> surged to <code>1.27</code> (yielding a <strong><code>0.88</code> Sharpe across the full 13-year sample</strong> under the <code>Regime-Adaptive LSTM</code>).</li>
+<li><strong>Subperiod Regime Dynamics (<code>2013–2015</code> vs. <code>2016–2019</code> vs. <code>2020–2026</code>)</strong>: During the slow, persistent <strong>2013–2015 commodity bear market</strong>, the longer-memory <code>Pre-2020 Calibrated LSTM (lb=32)</code> achieved the highest Sharpe ratio (<code>0.76</code> vs. <code>0.63</code> for <code>252d Momentum</code>). During the <strong>2016–2019 sideways market</strong>, all trend strategies faced headwinds (<code>252d Momentum</code> at <code>0.26</code> and <code>Pre-2020 LSTM</code> at <code>0.05</code>) (Wood et al., 2022). Conversely, during the V-shaped macro shocks of <strong>2020–2026</strong>, the short-memory <code>Compact LSTM (lb=20, 3y Win)</code> surged to <code>1.27</code> (yielding a <strong><code>0.88</code> Sharpe across the full 13-year sample</strong> under the <code>Regime-Adaptive LSTM</code>).</li>
 <li><strong>Synergy Between Multi-Horizon Features &amp; Short-Memory Regularization (Table 8.2b)</strong>: Neither multi-horizon momentum features (<code>X_mom</code>) in an unregularized 60-day architecture (<code>SR = 0.17</code>) nor a compact 20-day architecture fed only with 1-day returns (<code>X_raw</code>, <code>SR = 0.20</code>) succeeds on its own. High out-of-sample performance (<code>SR = 1.27</code>) requires <strong>both</strong> multi-scale momentum inputs (<code>5d–252d</code>) and a short, strongly regularized recurrent window (<code>lookback=20, wd=1e-3</code>).</li>
 </ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=64cdfdd2">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=6ac6bcee">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9399,7 +9398,7 @@ Table 8.2a: Walk-Forward Gross Sharpe Ratios Across Historical Regimes &amp; Tra
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=20a76674">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ebf9b46a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9409,13 +9408,13 @@ Table 8.2a: Walk-Forward Gross Sharpe Ratios Across Historical Regimes &amp; Tra
 <ol>
 <li>Tune the linear and tree-based baselines (<strong><code>RidgeCV</code></strong> and <strong><code>MultiLGBMRegressor</code></strong>) on the exact same chronological calibration window (<strong>2012–2019</strong>) and evaluate them out-of-sample (<strong>2020–2026</strong>).</li>
 <li>Model quadratic transaction / market-impact costs using <code>skfin.backtesting_with_cost</code> (<code>BacktesterWithCost</code> and <code>compute_pnl_components</code>) and evaluate <strong>Net Sharpe Ratios</strong> and cost sensitivity across all models.</li>
-<li>Conduct <strong>Lo (2002) non-IID Sharpe ratio confidence interval</strong> tests and <strong>Off-the-Top asset drop sensitivity</strong> checks.</li>
+<li>Conduct non-IID Sharpe ratio confidence interval tests (Lo, 2002) and <strong>Off-the-Top asset drop sensitivity</strong> checks.</li>
 </ol>
 <h3 id="9.1-Hyperparameter-Tuning-of-Linear-and-Tree-Baselines-(RidgeCV-&amp;-MultiLGBMRegressor)">9.1 Hyperparameter Tuning of Linear and Tree Baselines (<code>RidgeCV</code> &amp; <code>MultiLGBMRegressor</code>)<a class="anchor-link" href="#9.1-Hyperparameter-Tuning-of-Linear-and-Tree-Baselines-(RidgeCV-&amp;-MultiLGBMRegressor)">¶</a></h3>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=03cb3747">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fcfaca7c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9609,7 +9608,7 @@ Table 8.2a: Walk-Forward Gross Sharpe Ratios Across Historical Regimes &amp; Tra
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=aba59709">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b21b02e6">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9626,7 +9625,7 @@ where $\text{vlf}_{t,i}$ is computed strictly point-in-time via <code>compute_vo
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f1259442">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=afeeac86">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9883,7 +9882,7 @@ where $\text{vlf}_{t,i}$ is computed strictly point-in-time via <code>compute_vo
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=67d9fd66">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1df87f4a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -10054,17 +10053,17 @@ where $\text{vlf}_{t,i}$ is computed strictly point-in-time via <code>compute_vo
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b1f47c21">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=95693005">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="9.3-Statistical-Validation:-Lo-(2002)-Sharpe-Ratio-Confidence-Intervals-&amp;-Universe-Stability">9.3 Statistical Validation: Lo (2002) Sharpe Ratio Confidence Intervals &amp; Universe Stability<a class="anchor-link" href="#9.3-Statistical-Validation:-Lo-(2002)-Sharpe-Ratio-Confidence-Intervals-&amp;-Universe-Stability">¶</a></h3><p>Following <strong>Lo (2002)</strong> (<em>"The Statistics of Sharpe Ratios"</em>), daily financial strategy returns exhibit serial correlation and heteroskedasticity (non-IID effects). We compute Newey-West / Bartlett HAC standard errors and 95% confidence intervals for the <strong>Net Sharpe Ratios</strong> across all primary models, and perform an <strong>Off-the-Top Asset Drop Analysis</strong> (removing one commodity ETF at a time) to verify that the LSTM's performance is not driven by a single outlier asset.</p>
+<h3 id="9.3-Statistical-Validation:-HAC-Sharpe-Ratio-Confidence-Intervals-&amp;-Universe-Stability">9.3 Statistical Validation: HAC Sharpe Ratio Confidence Intervals &amp; Universe Stability<a class="anchor-link" href="#9.3-Statistical-Validation:-HAC-Sharpe-Ratio-Confidence-Intervals-&amp;-Universe-Stability">¶</a></h3><p>Daily financial strategy returns exhibit serial correlation and heteroskedasticity (non-IID effects), requiring Newey-West / Bartlett HAC standard errors to construct valid 95% confidence intervals for the <strong>Net Sharpe Ratios</strong> across all primary models (Lo, 2002). In addition, we perform an <strong>Off-the-Top Asset Drop Analysis</strong> (removing one commodity ETF at a time) to verify that the LSTM's performance is not driven by a single outlier asset.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2105931a">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4cc95f65">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -10242,7 +10241,7 @@ where $\text{vlf}_{t,i}$ is computed strictly point-in-time via <code>compute_vo
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=12ddcbe0">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ffe4c3ea">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -10251,70 +10250,70 @@ where $\text{vlf}_{t,i}$ is computed strictly point-in-time via <code>compute_vo
 <h2 id="10.-Conclusion,-Methodological-Limitations-&amp;-Key-Takeaways">10. Conclusion, Methodological Limitations &amp; Key Takeaways<a class="anchor-link" href="#10.-Conclusion,-Methodological-Limitations-&amp;-Key-Takeaways">¶</a></h2><h3 id="10.1-Summary-of-Empirical-Findings">10.1 Summary of Empirical Findings<a class="anchor-link" href="#10.1-Summary-of-Empirical-Findings">¶</a></h3><ol>
 <li><p><strong>Confirmation of Core Hypothesis (Net Sharpe Outperformance)</strong>:</p>
 <ul>
-<li>On the out-of-sample window (<strong>2020–2026</strong>), the <strong>Cost-Aware Compact LSTM</strong> achieves a <strong>Gross Sharpe of 1.30</strong> and a <strong>Net Sharpe of 1.26</strong> (95% Lo HAC CI: $[0.483, 2.029]$, $p = 0.0014$), while the single-seed <strong>Compact LSTM</strong> (<code>lookback=20, hidden_size=8, weight_decay=1e-3</code>) achieves a <strong>Gross Sharpe of 1.27</strong> and <strong>Net Sharpe of 1.21</strong> (95% Lo HAC CI: $[0.418, 1.998]$, $p = 0.0027$).</li>
-<li>Averaging across 5 random weight initializations (<strong>LSTM Seed Ensemble</strong>) yields a highly stable <strong>Gross Sharpe of 0.81</strong> and <strong>Net Sharpe of 0.78</strong> (95% Lo HAC CI: $[0.064, 1.490]$, $p = 0.0327$), cutting annualized turnover nearly in half (<code>64.75</code> vs. <code>125.95</code>) and reducing maximum net drawdown to just <code>-5.89%</code>.</li>
+<li>On the out-of-sample window (<strong>2020–2026</strong>), the <strong>Cost-Aware Compact LSTM</strong> achieves a <strong>Gross Sharpe of 1.30</strong> and a <strong>Net Sharpe of 1.26</strong> (95% HAC CI: $[0.483, 2.029]$, $p = 0.0014$), while the single-seed <strong>Compact LSTM</strong> (<code>lookback=20, hidden_size=8, weight_decay=1e-3</code>) achieves a <strong>Gross Sharpe of 1.27</strong> and <strong>Net Sharpe of 1.21</strong> (95% HAC CI: $[0.418, 1.998]$, $p = 0.0027$) (Lo, 2002).</li>
+<li>Averaging across 5 random weight initializations (<strong>LSTM Seed Ensemble</strong>) yields a highly stable <strong>Gross Sharpe of 0.81</strong> and <strong>Net Sharpe of 0.78</strong> (95% HAC CI: $[0.064, 1.490]$, $p = 0.0327$), cutting annualized turnover nearly in half (<code>64.75</code> vs. <code>125.95</code>) and reducing maximum net drawdown to just <code>-5.89%</code>.</li>
 <li>Both the Compact LSTM and the Seed Ensemble outperform <strong>Simple 252-day Momentum</strong> (Gross SR <code>0.77</code>, Net SR <code>0.76</code>), <strong>Simple 1-day Momentum</strong> (Gross SR <code>0.67</code>, Net SR <code>0.28</code>), <strong>Tuned LightGBM</strong> (Gross SR <code>0.15</code>, Net SR <code>-0.06</code>), and <strong>Tuned RidgeCV</strong> (Gross SR <code>-0.44</code>, Net SR <code>-0.46</code>).</li>
 </ul>
 </li>
 <li><p><strong>Why Feature Representation, Training-Window Length, and Strong Regularization Matter</strong>:</p>
 <ul>
-<li>Our $2 \times 2$ ablation (Table 8.2b) proves that neither multi-horizon features (<code>X_mom</code>) in a long 60-day LSTM (<code>Gross SR = 0.17</code>) nor a compact 20-day LSTM fed only with raw 1-day returns (<code>X_raw</code>, <code>Gross SR = 0.20</code>) succeeds alone. Supplying multi-horizon momentum features (<code>5d, 21d, 63d, 126d, 252d</code>) paired with a short lookback ($L=20$ days), compact hidden state ($H=8$), Huber loss ($\delta=0.01$), and strong $L_2$ weight decay ($10^{-3}$) is jointly required (<code>Gross SR = 1.27</code>).</li>
+<li>Our $2 \times 2$ ablation (Table 8.2b) proves that neither multi-horizon features (<code>X_mom</code>) in a long 60-day LSTM (<code>Gross SR = 0.17</code>) nor a compact 20-day LSTM fed only with raw 1-day returns (<code>X_raw</code>, <code>Gross SR = 0.20</code>) succeeds alone. Supplying multi-horizon momentum features (<code>5d, 21d, 63d, 126d, 252d</code>) paired with a short lookback ($L=20$ days), compact hidden state ($H=8$), Huber loss ($\delta=0.01$), and strong $L_2$ weight decay ($10^{-3}$) is jointly required (<code>Gross SR = 1.27</code>) (Lim et al., 2019; Wood et al., 2022).</li>
 <li>Across the 13-year multi-regime evaluation (<code>2013–2026</code>, Table 8.2a), a <strong>3-year rolling training window (<code>756d</code>, full-sample SR <code>0.68</code>)</strong> provides the optimal balance between statistical sample size and regime adaptability compared to 2-year (<code>504d</code>, SR <code>0.35</code>) and 5-year (<code>1260d</code>, SR <code>0.05</code>) training windows.</li>
 </ul>
 </li>
 <li><p><strong>Impact of Transaction Costs &amp; Universe Robustness</strong>:</p>
 <ul>
 <li>High-turnover daily predictors (<code>Simple Momentum 1d</code>, <code>Ridge Baseline</code>, and <code>Tuned LightGBM</code>, with average holding periods of $1.5\text{–}3.3$ days) suffer severe performance degradation under quadratic transaction costs.</li>
-<li>In contrast, the <strong>LSTM Seed Ensemble</strong> and <strong>Cost-Aware Compact LSTM</strong> exhibit much lower turnover (<code>64.75</code> and <code>88.16</code>), preserving $&gt;95\%$ of their gross Sharpe ratio net of costs even under $2\times$ and $3\times$ cost stress tests.</li>
+<li>In contrast, the <strong>LSTM Seed Ensemble</strong> and <strong>Cost-Aware Compact LSTM</strong> exhibit much lower turnover (<code>64.75</code> and <code>88.16</code>), preserving $&gt;95\%$ of their gross Sharpe ratio net of costs even under $2\times$ and $3\times$ cost stress tests (Gârleanu &amp; Pedersen, 2013).</li>
 <li>Off-the-top universe stability tests confirm that the Compact LSTM remains strongly profitable across all 4-ETF subsets when any single ETF (including <code>USO</code> or <code>SLV</code>) is excluded from the basket.</li>
 </ul>
 </li>
 </ol>
 <hr/>
-<h3 id="10.2-Methodological-Limitations-&amp;-Future-Research-Extensions">10.2 Methodological Limitations &amp; Future Research Extensions<a class="anchor-link" href="#10.2-Methodological-Limitations-&amp;-Future-Research-Extensions">¶</a></h3><p>To maintain rigorous academic transparency, we highlight five methodological limitations of our framework and concrete avenues for future extensions:</p>
+<h3 id="10.2-Methodological-Limitations-&amp;-Future-Research-Extensions">10.2 Methodological Limitations &amp; Future Research Extensions<a class="anchor-link" href="#10.2-Methodological-Limitations-&amp;-Future-Research-Extensions">¶</a></h3><p>To maintain rigorous academic transparency, we highlight four methodological limitations of our framework and concrete avenues for future extensions:</p>
 <ol>
 <li><p><strong>Two-Stage "Predict-Then-Optimize" Regression Loss vs. End-to-End Sharpe Optimization</strong>:</p>
 <ul>
 <li>Because <code>skfin</code>'s modular pipeline (<code>make_pipeline(StandardScaler, Estimator, MeanVariance)</code>) separates return forecasting from portfolio construction, <code>PyTorchLSTMRegressor</code> minimizes pointwise <strong>Huber prediction error</strong> on next-day returns ($\hat{y}_t \approx r_{t+1}$) before passing forecasts into Markowitz optimization.</li>
-<li>However, <strong>Lim, Zohren &amp; Roberts (2019, Section IV-A &amp; Exhibit 3, p. 9)</strong> demonstrate that training a Deep Momentum Network <strong>end-to-end on the differential Sharpe Ratio objective</strong> (<code>LSTM - Sharpe</code>, Gross SR <code>1.233</code>) substantially outperforms two-stage regression training (<code>LSTM - MSE</code>, Gross SR <code>0.791</code>), and <strong>Wood et al. (2022, Section IV-B, Eqs. 12–14, p. 5)</strong> extend this to optimize <strong>net-of-cost Sharpe ratio</strong> directly inside the neural network loss. Implementing a custom end-to-end differentiable Sharpe loss is a natural extension.</li>
+<li>Training the sequence network <strong>end-to-end on a differentiable Sharpe ratio or net-of-cost utility objective</strong> rather than a two-stage return regression loss is a natural extension that directly aligns gradient updates with portfolio risk-adjusted performance (Lim et al., 2019; Wood et al., 2022).</li>
 </ul>
 </li>
 <li><p><strong>Static Pre-2020 Hyperparameter Calibration vs. Rolling Nested Re-Calibration</strong>:</p>
 <ul>
 <li>In Section 6, hyperparameters were calibrated once on <strong>2012–2019</strong> via Random Search (<code>Trial 9: lookback=32, wd=3.4e-4</code>). While <code>lookback=32</code> performed well during the slower 2013–2015 bear market (<code>SR = 0.76</code>, Table 8.2a), freezing those parameters across the 2020–2026 pandemic/inflation shocks led to severe regime lag (<code>OOS SR = -0.07</code>), whereas the shorter-memory <code>Compact LSTM (lookback=20, wd=1e-3)</code> achieved <code>1.27</code>.</li>
-<li>In a live institutional deployment, rather than freezing hyperparameters once in 2019 or specifying a fixed compact architecture, one should implement <strong>rolling nested hyperparameter re-calibration</strong> (re-running Random Search every 1–2 years on the trailing window, as in <strong>Lim et al., 2019</strong> and <strong>Wood et al., 2022, Exhibit 1</strong>) or <strong>Top-$K$ Trial Ensembling</strong> so the model automatically shortens its lookback window once high-volatility shocks enter the calibration window (as illustrated by our <code>Regime-Adaptive LSTM</code> achieving <code>SR = 0.88</code> over <code>2013–2026</code>).</li>
+<li>In a live institutional deployment, implementing <strong>rolling nested hyperparameter re-calibration</strong> (re-running Random Search every 1–2 years on the trailing window) or <strong>Top-$K$ Trial Ensembling</strong> allows the pipeline to automatically shorten its lookback window once high-volatility shocks enter the calibration window, as illustrated by our <code>Regime-Adaptive LSTM</code> achieving <code>SR = 0.88</code> over <code>2013–2026</code> (Lim et al., 2019; Wood et al., 2022).</li>
 </ul>
 </li>
 <li><p><strong>Regime Non-Stationarity in Sideways / Mean-Reverting Markets (<code>2016–2019</code>)</strong>:</p>
 <ul>
-<li>As shown in our multi-regime analysis (Table 8.2a), while momentum strategies thrive during directional macro trends (<code>2013–2015</code> commodity bear crash and <code>2020–2026</code> inflation supercycle), both linear TSMOM (<code>SR = 0.26</code>) and LSTM models (<code>SR = 0.05</code> to <code>-0.41</code>) struggle during low-volatility, range-bound markets (<code>2016–2019</code>).</li>
-<li><strong>Wood, Giegerich, Roberts &amp; Zohren (2022)</strong> show that augmenting recurrent layers with <strong>multi-head self-attention (the Momentum Transformer)</strong> and <strong>changepoint detection (CPD)</strong> features helps the model identify regime boundaries and switch between trend-following and mean-reversion.</li>
+<li>Our multi-regime analysis (Table 8.2a) shows that while momentum strategies thrive during directional macro trends (<code>2013–2015</code> commodity bear crash and <code>2020–2026</code> inflation supercycle), both linear TSMOM (<code>SR = 0.26</code>) and LSTM models (<code>SR = 0.05</code> to <code>-0.41</code>) struggle during low-volatility, range-bound markets (<code>2016–2019</code>).</li>
+<li>Augmenting recurrent layers with <strong>multi-head self-attention</strong> and <strong>changepoint detection</strong> features can help sequence models identify regime boundaries and switch dynamically between trend-following and mean-reversion (Wood et al., 2022).</li>
 </ul>
 </li>
 <li><p><strong>Instrument Lifespan (<code>2007–2026</code>), Composite Overlap (<code>DBC</code>), and Unobserved Futures Carry</strong>:</p>
 <ul>
-<li>Our sample begins in January 2007 (<code>N = 5,005</code> days) because commodity ETFs (<code>GLD</code>, <code>DBC</code>, <code>USO</code>, <code>SLV</code>, <code>DBA</code>) did not exist prior to 2004–2007. While this spans 100% of the ETF universe's history in the post-financialization electronic trading era (matching <strong>Ben Ameur et al., 2024</strong>, <code>N = 5,152</code> days over 2002–2022), extending back to the 1980s–1990s would require splicing institutional continuous futures contracts (<strong>Moskowitz et al., 2012</strong>).</li>
-<li>Furthermore, <code>DBC</code> is a broad composite ETF whose underlying futures partially overlap with <code>USO</code>, <code>GLD</code>, and <code>DBA</code>, and single front-month ETF returns bundle spot price changes and <strong>roll yield (carry)</strong> into a single series. Incorporating explicit <strong>term-structure carry signals</strong> (the basis between 1st- and 2nd-nearby futures contracts, <strong>Moskowitz et al., 2012, Section 6.3</strong>) and volatility-normalized MACD indicators (<strong>Lim et al., 2019, Eqs. 15–17</strong>) could further improve predictive power.</li>
+<li>Our sample begins in January 2007 (<code>N = 5,005</code> days) because commodity ETFs (<code>GLD</code>, <code>DBC</code>, <code>USO</code>, <code>SLV</code>, <code>DBA</code>) did not exist prior to 2004–2007. While this spans 100% of the ETF universe's history in the post-financialization electronic trading era (Ben Ameur et al., 2024), extending back to earlier decades would require splicing institutional continuous futures contracts (Moskowitz et al., 2012).</li>
+<li>Furthermore, <code>DBC</code> is a broad composite ETF whose underlying futures partially overlap with <code>USO</code>, <code>GLD</code>, and <code>DBA</code>, and single front-month ETF returns bundle spot price changes and <strong>roll yield (carry)</strong> into a single series. Incorporating explicit <strong>term-structure carry signals</strong> from 1st- and 2nd-nearby futures contracts as well as volatility-normalized MACD indicators could further improve predictive power (Moskowitz et al., 2012; Lim et al., 2019).</li>
 </ul>
 </li>
 </ol>
 <hr/>
-<h3 id="10.3-Comparison-with-Scientific-Literature-&amp;-References">10.3 Comparison with Scientific Literature &amp; References<a class="anchor-link" href="#10.3-Comparison-with-Scientific-Literature-&amp;-References">¶</a></h3><p>Our empirical results closely mirror and extend recent findings in the quantitative finance literature:</p>
+<h3 id="10.3-Synthesis-with-Academic-Literature-&amp;-References">10.3 Synthesis with Academic Literature &amp; References<a class="anchor-link" href="#10.3-Synthesis-with-Academic-Literature-&amp;-References">¶</a></h3><p>Our empirical results closely align with and extend core findings in quantitative finance:</p>
 <ol>
-<li><strong>Nonlinear Momentum vs. Linear TSMOM</strong>: Consistent with <strong>Lim, Zohren &amp; Roberts (2019)</strong> and <strong>Ben Ameur et al. (2024)</strong>, we find that a compact LSTM fed with multi-horizon momentum features (5d–252d) outperforms both traditional 12-month time-series momentum (<strong>Moskowitz, Ooi &amp; Pedersen, 2012</strong>, Net SR <code>0.76</code>) and penalized linear/tree regressions (<strong>Gu, Kelly &amp; Xiu, 2020</strong>) during turbulent commodity regimes (<code>Cost-Aware LSTM</code> Net SR <code>1.26</code>, <code>Seed Ensemble</code> Net SR <code>0.78</code>).</li>
-<li><strong>Adaptation to Post-2020 Structural Breaks</strong>: <strong>Wood, Giegerich, Roberts &amp; Zohren (2022)</strong> highlight that standard long-memory sequence models struggle during sudden regime switches like the 2020 COVID-19 crash. We observe the exact same phenomenon: the in-sample Random Search model with a 32-day lookback and weak regularization (<code>wd=3.4e-4</code>) excelled in the slow 2013–2015 bear market (<code>SR = 0.76</code>) but stalled in 2020–2026 (<code>OOS SR = -0.07</code>), whereas constraining the lookback to 20 days with strong $L_2$ weight decay (<code>1e-3</code>) enabled rapid adaptation to the 2020–2026 shocks (<code>OOS SR = 1.27</code>).</li>
-<li><strong>Turnover Amortization &amp; Cost-Aware Trading</strong>: Confirming <strong>Gârleanu &amp; Pedersen (2013)</strong>, fast-decaying daily signals (<code>1d Momentum</code>, <code>Ridge</code>, <code>LightGBM</code>) incur prohibitive quadratic transaction costs (<code>-3.17%</code> to <code>-5.86%</code> per year), whereas embedding the quadratic cost penalty directly into the Markowitz step (<code>WalkForwardMeanVarianceWithCost</code>) and ensembling across random seeds shrinks annualized cost drag to just <code>-0.09%</code> to <code>-0.36%</code>.</li>
+<li><strong>Nonlinear Momentum vs. Linear TSMOM</strong>: Our compact LSTM fed with multi-horizon momentum features (<code>5d–252d</code>) outperforms both traditional 12-month time-series momentum (<code>Net SR = 0.76</code>) and penalized linear/tree regressions during turbulent commodity regimes (<code>Cost-Aware LSTM</code> Net SR <code>1.26</code>, <code>Seed Ensemble</code> Net SR <code>0.78</code>) (Moskowitz et al., 2012; Lim et al., 2019; Gu et al., 2020; Ben Ameur et al., 2024).</li>
+<li><strong>Adaptation to Post-2020 Structural Breaks</strong>: Long-memory sequence models (<code>lookback=32</code>, weak regularization <code>wd=3.4e-4</code>) excelled in the slow 2013–2015 bear market (<code>SR = 0.76</code>) but stalled during the 2020–2026 macro turning points (<code>OOS SR = -0.07</code>), whereas constraining the lookback to 20 days with strong $L_2$ weight decay (<code>1e-3</code>) enabled rapid adaptation to the 2020–2026 shocks (<code>OOS SR = 1.27</code>) (Wood et al., 2022).</li>
+<li><strong>Turnover Amortization &amp; Cost-Aware Trading</strong>: Fast-decaying daily signals (<code>1d Momentum</code>, <code>Ridge</code>, <code>LightGBM</code>) incur prohibitive quadratic transaction costs (<code>-3.17%</code> to <code>-5.86%</code> per year), whereas embedding the quadratic cost penalty directly into the Markowitz step (<code>WalkForwardMeanVarianceWithCost</code>) and ensembling across random seeds shrinks annualized cost drag to just <code>-0.09%</code> to <code>-0.36%</code> (Gârleanu &amp; Pedersen, 2013).</li>
 </ol>
-<h4 id="Key-References">Key References<a class="anchor-link" href="#Key-References">¶</a></h4><ul>
-<li><strong>Ampountolas, A. (2024).</strong> <em>Forecasting orange juice futures: LSTM, ConvLSTM, and traditional models across trading horizons.</em> Journal of Risk and Financial Management, 17(2).</li>
-<li><strong>Ben Ameur, H., Boubaker, S., Ftiti, Z., Louhichi, W., &amp; Tissaoui, K. (2024).</strong> <em>Forecasting commodity prices: Empirical evidence using deep learning tools.</em> Annals of Operations Research, 339, 349–367.</li>
-<li><strong>Gârleanu, N., &amp; Pedersen, L. H. (2013).</strong> <em>Dynamic trading with predictable returns and transaction costs.</em> The Journal of Finance, 68(6), 2309–2340.</li>
-<li><strong>Gu, S., Kelly, B., &amp; Xiu, D. (2020).</strong> <em>Empirical asset pricing via machine learning.</em> The Review of Financial Studies, 33(5), 2223–2273.</li>
-<li><strong>Lim, B., Zohren, S., &amp; Roberts, S. (2019).</strong> <em>Enhancing time-series momentum strategies using deep neural networks.</em> The Journal of Financial Data Science, 1(4), 19–38.</li>
-<li><strong>Lo, A. W. (2002).</strong> <em>The statistics of Sharpe ratios.</em> Financial Analysts Journal, 58(4), 36–52.</li>
-<li><strong>Miffre, J., &amp; Rallis, G. (2007).</strong> <em>Momentum strategies in commodity futures markets.</em> Journal of Banking &amp; Finance, 31(6), 1863–1886.</li>
-<li><strong>Moskowitz, T. J., Ooi, Y. H., &amp; Pedersen, L. H. (2012).</strong> <em>Time series momentum.</em> Journal of Financial Economics, 104(2), 228–250.</li>
-<li><strong>Wood, K., Giegerich, S., Roberts, S., &amp; Zohren, S. (2022).</strong> <em>Trading with the Momentum Transformer: An intelligent and interpretable architecture.</em> arXiv:2112.08534v3.</li>
+<h4 id="References">References<a class="anchor-link" href="#References">¶</a></h4><ul>
+<li>Ampountolas, A. (2024). Forecasting orange juice futures: LSTM, ConvLSTM, and traditional models across trading horizons. <em>Journal of Risk and Financial Management</em>, 17(2).</li>
+<li>Ben Ameur, H., Boubaker, S., Ftiti, Z., Louhichi, W., &amp; Tissaoui, K. (2024). Forecasting commodity prices: Empirical evidence using deep learning tools. <em>Annals of Operations Research</em>, 339, 349–367.</li>
+<li>Gârleanu, N., &amp; Pedersen, L. H. (2013). Dynamic trading with predictable returns and transaction costs. <em>The Journal of Finance</em>, 68(6), 2309–2340.</li>
+<li>Gu, S., Kelly, B., &amp; Xiu, D. (2020). Empirical asset pricing via machine learning. <em>The Review of Financial Studies</em>, 33(5), 2223–2273.</li>
+<li>Lim, B., Zohren, S., &amp; Roberts, S. (2019). Enhancing time-series momentum strategies using deep neural networks. <em>The Journal of Financial Data Science</em>, 1(4), 19–38.</li>
+<li>Lo, A. W. (2002). The statistics of Sharpe ratios. <em>Financial Analysts Journal</em>, 58(4), 36–52.</li>
+<li>Miffre, J., &amp; Rallis, G. (2007). Momentum strategies in commodity futures markets. <em>Journal of Banking &amp; Finance</em>, 31(6), 1863–1886.</li>
+<li>Moskowitz, T. J., Ooi, Y. H., &amp; Pedersen, L. H. (2012). Time series momentum. <em>Journal of Financial Economics</em>, 104(2), 228–250.</li>
+<li>Wood, K., Giegerich, S., Roberts, S., &amp; Zohren, S. (2022). Trading with the Momentum Transformer: An intelligent and interpretable architecture. <em>arXiv:2112.08534v3</em>.</li>
 </ul>
 </div>
 </div>
