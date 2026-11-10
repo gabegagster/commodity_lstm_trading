@@ -131,6 +131,13 @@ def create_notebook_v2() -> None:
             r"""# Deep Sequence Models in Commodity Markets
 **Authors:** Gabriel Himmelein & Tomàs Planelles Alonso
 
+> **AI Usage & Verification Note:** The code in this notebook was developed through a combination of hand-coding and LLM-assisted coding. All model architectures, walk-forward backtesting logic, transaction cost calculations, and empirical results have been independently executed and carefully checked by the authors.
+
+| Author | Contributions |
+| :--- | :--- |
+| **Gabriel Himmelein** | Data pipeline & EDA (Sec. 1), multi-horizon momentum engineering (Sec. 2), PyTorch `CommodityLSTM` & `skfin` wrapper (Sec. 3), pre-2020 random search calibration (Sec. 4), OOS walk-forward evaluation (Sec. 5), 5-seed ensembling, regime sensitivity & $2 \times 2$ ablation (Sec. 6). |
+| **Tomàs Planelles Alonso** | Tuning of `RidgeCV` & `MultiLGBMRegressor` baselines (Sec. 7.1), quadratic transaction cost modeling & cost-aware `WalkForwardMeanVarianceWithCost` optimization (Sec. 7.2), Lo (2002) Newey-West HAC inference & leave-one-out stability (Sec. 7.3), conclusions & limitations (Sec. 8). |
+
 This notebook evaluates whether a compact, regularized **Long Short-Term Memory (LSTM)** network can improve the **net Sharpe ratio (after transaction costs)** of a time-series momentum strategy across five liquid commodity ETFs compared to **Simple Momentum**, **Ridge / RidgeCV**, and **LightGBM** within the `skfin` walk-forward Mean-Variance framework:
 - **DBC**: Invesco DB Commodity Index Tracking Fund (broad diversified commodities)
 - **USO**: United States Oil Fund (crude oil)
@@ -138,7 +145,7 @@ This notebook evaluates whether a compact, regularized **Long Short-Term Memory 
 - **SLV**: iShares Silver Trust (silver)
 - **DBA**: Invesco DB Agriculture Fund (agriculture)
 
-Our empirical design connects five strands of the quantitative finance literature: time-series momentum across 1- to 12-month horizons in commodity markets (Miffre & Rallis, 2007; Moskowitz et al., 2012), deep sequence models for momentum and regime turning points (Lim et al., 2019; Wood et al., 2022), nonlinear forecasting across diversified commodity baskets (Ampountolas, 2024; Ben Ameur et al., 2024), dynamic portfolio optimization under quadratic transaction costs (Gârleanu & Pedersen, 2013), and multi-seed ensembling with autocorrelation-consistent (HAC) Sharpe inference (Lo, 2002; Gu et al., 2020)."""
+Our empirical setup builds on five core papers: time-series momentum across 1- to 12-month horizons (Moskowitz et al., 2012), deep sequence models for time-series momentum (Lim et al., 2019), machine learning return prediction with Huber loss and multi-seed neural network ensembling (Gu et al., 2020), dynamic portfolio optimization under quadratic transaction costs (Gârleanu & Pedersen, 2013), and autocorrelation-consistent (HAC) Sharpe ratio inference (Lo, 2002)."""
         )
     )
 
@@ -149,8 +156,8 @@ Our empirical design connects five strands of the quantitative finance literatur
 We source daily total returns via `skfin.datasets.load_yf_returns`. Futures-based ETFs (`DBC`, `USO`, `DBA`) combine spot price movements with futures roll yield (positive in backwardation, negative in contango) and collateral interest, whereas physically backed trusts (`GLD`, `SLV`) track spot bullion net of storage fees.
 
 To enforce strict chronological integrity and prevent look-ahead bias:
-1. **Synchronized Inception (`2007–2026`, $N = 5,158$ business days)**: Observations prior to the newest ETF's launch (**DBA** in January 2007) are dropped, capturing the full post-financialization history of this 5-ETF universe.
-2. **Business-Day Alignment & Total Returns**: Series are reindexed to business days (`freq='B'`) with zero return on market holidays, incorporating both price changes and cash distributions.
+1. **Synchronized Inception (`2007–2026`, $N = 5,158$ business days)**: Observations prior to the newest ETF's launch (**DBA** in January 2007) are dropped, capturing the full history of this 5-ETF universe without missing-data imputation.
+2. **Business-Day Alignment & Total Returns**: Series are reindexed to business days (`freq='B'`) with zero return on market holidays, incorporating both price changes and cash distributions. Reindexing to a standard 260-day business calendar (`freq='B'`) with `0.0` returns on exchange holidays is required for uniform lag alignment in `skfin` and matches the `260`-day annualization factor used in `TARGET_VOL`, while slightly dampening raw daily sample variance compared to a 252-trading-day convention.
 3. **Uniform Volatility Target**: All strategies are scaled to a 10% annualized volatility target (`TARGET_VOL = 0.10 / sqrt(260)`) so returns, Sharpe ratios, and drawdowns are compared on an identical risk basis."""
         )
     )
@@ -219,7 +226,7 @@ def get_default_device() -> torch.device:
 def load_commodity_data(
     tickers: Optional[List[str]] = None,
     start: str = "2007-01-01",
-    end: Optional[str] = None,
+    end: Optional[str] = "2026-10-14",
     cache_dir: str = "data",
     force_reload: bool = False,
     resample_bday: bool = True,
@@ -239,6 +246,8 @@ def load_commodity_data(
         if resample_bday:
             bday_idx = pd.date_range(start=df.index[0], end=df.index[-1], freq="B")
             df = df.reindex(bday_idx).fillna(0.0)
+        if end is not None:
+            df = df.loc[:end]
         cleaned[key] = df
     return cleaned
 
@@ -272,7 +281,7 @@ compute_descriptive_stats(ret)"""
 Three empirical properties in the summary table above directly shape our model design:
 1. **Cross-Sectional Volatility Dispersion**: Annualized volatility spans `16.68%` (`DBA`), `18.14%` (`GLD`), and `19.36%` (`DBC`) up to `33.00%` (`SLV`) and `37.49%` (`USO`). Without covariance and volatility scaling (`MeanVariance(risk_target=TARGET_VOL)`), crude oil and silver would dominate portfolio variance.
 2. **Contango Drag vs. Dynamic Trend Potential**: Passive buy-and-hold performance is bifurcated between **GLD** (`Sharpe = 0.60`, `10.87%` return) and **USO** (`Sharpe = 0.07`, `2.53%` return, with a `-25.32%` single-day crash during the April 2020 WTI negative-oil episode). While passive long energy suffers from negative roll yield during contango storage gluts, time-series momentum can profit from both backwardated rallies and persistent contango sell-offs (Moskowitz et al., 2012).
-3. **Fat Tails & Cross-Sector Diversification**: Negative skewness across all five ETFs (`-1.05` for `SLV`, `-0.55` for `USO`) and high excess kurtosis (`3.46` to `13.41`) motivate training our sequence model with tail-robust **Huber loss ($\delta = 0.01$)** rather than MSE. Meanwhile, low correlations between precious metals (`GLD`) and energy (`USO`, `0.20`) or agriculture (`DBA`, `0.27`) provide substantial diversification across the four macroeconomic regimes in our sample (the 2008 GFC, the 2012–2019 commodity bear market, the 2020 COVID-19 crash, and the 2021–2026 inflation cycle)."""
+3. **Fat Tails & Cross-Sector Diversification**: Negative skewness across all five ETFs (`-1.05` for `SLV`, `-0.55` for `USO`) and high excess kurtosis (`3.46` to `13.41`) motivate training our sequence model with tail-robust **Huber loss ($\delta = 0.01$)** rather than MSE so extreme return outliers do not destabilize gradient updates (Gu et al., 2020). Meanwhile, low correlations between precious metals (`GLD`) and energy (`USO`, `0.20`) or agriculture (`DBA`, `0.27`) provide substantial diversification across the four macroeconomic regimes in our sample (the 2008 GFC, the 2012–2019 commodity bear market, the 2020 COVID-19 crash, and the 2021–2026 inflation cycle)."""
         )
     )
 
@@ -399,13 +408,13 @@ line(
     cells.append(
         nbf.v4.new_markdown_cell(
             r"""## 3. PyTorch LSTM Architecture & `skfin` Estimator Wrapper
-Across sequence steps $t - L + 1, \dots, t$, our `CommodityLSTM` updates its cell state $c_t$ and hidden state $h_t$ via forget ($f_t$), input ($i_t$), and output ($o_t$) gates:
+Across sequence steps $t - L + 1, \dots, t$, our `CommodityLSTM` updates its cell state $c_t$ and hidden state $h_t$ via forget ($f_t$), input ($i_t$), and output ($o_t$) gates (Lim et al., 2019):
 $$f_t = \sigma(W_f x_t + U_f h_{t-1} + b_f), \quad i_t = \sigma(W_i x_t + U_i h_{t-1} + b_i), \quad \tilde{c}_t = \tanh(W_c x_t + U_c h_{t-1} + b_c)$$
 $$c_t = f_t \odot c_{t-1} + i_t \odot \tilde{c}_t, \quad o_t = \sigma(W_o x_t + U_o h_{t-1} + b_o), \quad h_t = o_t \odot \tanh(c_t)$$
-High-capacity LSTMs (e.g., 64–100 units) used for non-stationary price-level forecasting overfit rapidly when predicting stationary daily returns $r_{t+1}$ where the signal-to-noise ratio is low. We incorporate five safeguards in `CommodityLSTM` and `PyTorchLSTMRegressor`:
+High-capacity LSTMs (e.g., 64–100 units) used for non-stationary price-level forecasting overfit rapidly when predicting stationary daily returns $r_{t+1}$ where the signal-to-noise ratio is low (Gu et al., 2020). We incorporate five safeguards in `CommodityLSTM` and `PyTorchLSTMRegressor`:
 1. **Compact Bottleneck & Forget-Gate Bias**: A single recurrent layer (`hidden_size=8`) with Xavier weight initialization and forget-gate bias initialized to $b_f = +1.0$ so the network retains multi-scale momentum memory early in training.
 2. **Dropout & $L_2$ Weight Decay**: Dropout ($p = 0.2$) on the final hidden state $h_t$ before the linear readout layer, paired with AdamW weight decay ($10^{-3}$) and gradient norm clipping (`1.0`).
-3. **Tail-Robust Huber Loss ($\delta = 0.01$)**: Quadratic for small residuals ($|e| \le \delta$) and linear in the tails ($|e| > \delta$), preventing extreme return spikes from destabilizing gradient updates.
+3. **Tail-Robust Huber Loss ($\delta = 0.01$)**: Quadratic for small residuals ($|e| \le \delta$) and linear in the tails ($|e| > \delta$), preventing extreme return spikes from destabilizing gradient updates (Gu et al., 2020).
 4. **Chronological Validation & Early Stopping**: The final 15% of each 756-day training window is held out chronologically (without shuffling) to trigger early stopping (`patience=5`) and `ReduceLROnPlateau`.
 5. **Walk-Forward Sequence Buffering (`last_train_X_`)**: At the end of `fit()`, the trailing `lookback` rows of the training fold are cached and prepended during `predict(X_test)` so every day of each 21-day out-of-sample fold has a complete $L$-day lookback sequence without look-ahead bias."""
         )
@@ -461,10 +470,10 @@ def _create_sliding_sequences(
     n_samples, n_features = X.shape
     if n_samples < lookback:
         raise ValueError(f"Samples ({n_samples}) < lookback ({lookback}).")
-    n_seq = n_samples - lookback + 1
-    X_seq = np.empty((n_seq, lookback, n_features), dtype=np.float32)
-    for i in range(n_seq):
-        X_seq[i] = X[i : i + lookback]
+    X_seq = np.ascontiguousarray(
+        np.lib.stride_tricks.sliding_window_view(X, window_shape=lookback, axis=0).transpose(0, 2, 1),
+        dtype=np.float32,
+    )
     if y is None:
         return X_seq, None
     y_seq = np.asarray(y[lookback - 1 :], dtype=np.float32)
@@ -629,7 +638,7 @@ plt.show()"""
     cells.append(
         nbf.v4.new_markdown_cell(
             r"""## 4. In-Sample Hyperparameter Calibration (2012–2019)
-Tuning neural network hyperparameters on the 2020–2026 test period would introduce look-ahead selection bias. Instead, we run a 15-trial **Random Search** (`ParameterSampler`) inside `Backtester` strictly over the pre-test calibration window (**2012–2019**), sampling `hidden_size` $\in \{6,\dots,16\}$, `lookback` $\in \{15,\dots,44\}$, `weight_decay` $\sim \text{loguniform}(10^{-4}, 5\times 10^{-3})$, `dropout` $\sim \text{uniform}(0.10, 0.35)$, and `lr` $\sim \text{loguniform}(5\times 10^{-4}, 2\times 10^{-3})$.
+Tuning neural network hyperparameters on the 2020–2026 test period would introduce look-ahead selection bias (Lim et al., 2019). Instead, we run a 15-trial **Random Search** (`ParameterSampler`) inside `Backtester` strictly over the pre-test calibration window (**2012–2019**), sampling `hidden_size` $\in \{6,\dots,16\}$, `lookback` $\in \{15,\dots,44\}$, `weight_decay` $\sim \text{loguniform}(10^{-4}, 5\times 10^{-3})$, `dropout` $\sim \text{uniform}(0.10, 0.35)$, and `lr` $\sim \text{loguniform}(5\times 10^{-4}, 2\times 10^{-3})$.
 
 During the comparatively quiet, range-bound **2012–2019** regime, longer sequence windows (`lookback`) correlated positively with Sharpe ratio while strong $L_2$ weight decay correlated negatively, selecting **Trial 9** (`hidden_size=9`, `lookback=32`, `weight_decay=3.4e-4`, `dropout=0.327`, calibration Sharpe `0.651`). In Sections 5 and 6, we test whether this longer-memory pre-2020 specification survives the abrupt post-2020 macroeconomic shocks compared to a shorter-memory, strongly regularized model (`lookback=20`, `hidden_size=8`, `weight_decay=1e-3`)."""
         )
@@ -851,7 +860,7 @@ compute_strategy_summary(pnls_all, holdings_all)"""
 ## 6. Robustness: Multi-Seed Ensembling, Historical Regimes & Ablation
 ### 6.1 Multi-Seed Ensembling & Why `lookback=20` Beats `lookback=32` After 2020
 Why did the 2012–2019 random search winner (`lookback=32, wd=3.4e-4`, IS Sharpe `0.651`) drop to `-0.07` during 2020–2026 while `Compact LSTM (lookback=20, wd=1e-3)` achieved `1.27`?
-- **Memory Lag at Abrupt Turning Points**: Because LSTM cell states propagate sequentially step-by-step, a long lookback window continues carrying pre-shock hidden states after an abrupt structural break (such as the April 2020 negative oil shock or the 2022 Ukraine invasion), accumulating prediction errors across regime transitions (Wood et al., 2022). Restricting sequence memory to **`lookback=20` business days ($\approx 1$ month)** with strong weight decay (`1e-3`) flushes stale pre-crisis cell states within four weeks while still accessing 1-week to 12-month momentum at each step via `X_mom`.
+- **Memory Lag at Abrupt Turning Points**: Because LSTM cell states propagate sequentially step-by-step, a long lookback window continues carrying pre-shock hidden states after an abrupt structural break (such as the April 2020 negative oil shock or the 2022 Ukraine invasion), accumulating prediction errors across regime transitions (Lim et al., 2019). Restricting sequence memory to **`lookback=20` business days ($\approx 1$ month)** with strong weight decay (`1e-3`) flushes stale pre-crisis cell states within four weeks while still accessing 1-week to 12-month momentum at each step via `X_mom`.
 - **Multi-Seed Ensembling**: Because neural network training is sensitive to random weight initialization and mini-batch ordering (Gu et al., 2020), we evaluate `Compact LSTM` across **5 independent seeds (`42, 101, 2024, 7, 999`)** and form an equal-weighted **Seed Ensemble** ($h_t^{\text{ens}} = \frac{1}{5}\sum_{k=1}^5 h_t^{(k)}$). While individual seeds exhibit substantial initialization dispersion (Sharpe ratios of `1.27, 0.35, -0.17, 0.69, -0.33`, mean `0.36 ± 0.58`), averaging holdings across the 5 seeds cancels idiosyncratic forecast noise, reducing annualized portfolio volatility to `6.03%`, cutting annualized turnover nearly in half (`64.75` vs. `125.95`), slashing maximum net drawdown to `-5.89%`, and achieving a **5-Seed Ensemble Gross Sharpe of `0.81` (`0.809`)**."""
         )
     )
@@ -1019,7 +1028,7 @@ display(ablation_table)"""
         nbf.v4.new_markdown_cell(
             r"""## 7. Tuned Baselines, Transaction Cost Modeling & Statistical Validation
 ### 7.1 Hyperparameter Tuning of Linear and Tree Baselines (`RidgeCV` & `MultiLGBMRegressor`)
-To ensure a fair comparison on `X_mom`, we tune both **`RidgeCV`** (`alphas=[1e-2, 1e-1, 1, 10, 100, 1000]`) and a 12-trial **`MultiLGBMRegressor`** random search on the same **2012–2019** calibration window and evaluate them out-of-sample over **2020–2026**."""
+To ensure a fair comparison on `X_mom`, we tune both **`RidgeCV`** (`alphas=[1e-2, 1e-1, 1, 10, 100, 1000]`) and a 12-trial **`MultiLGBMRegressor`** random search on the same **2012–2019** calibration window and evaluate them out-of-sample over **2020–2026** (Gu et al., 2020). We expect a large shrinking factor for **`RidgeCV`** in order to balance the non-linearity of the data."""
         )
     )
 
@@ -1340,7 +1349,7 @@ pd.DataFrame(sensitivity_rows).set_index("Cost Multiplier")"""
     cells.append(
         nbf.v4.new_markdown_cell(
             r"""### 7.3 Statistical Inference (Lo, 2002 HAC Confidence Intervals) & Universe Stability
-Because daily strategy returns exhibit serial correlation and heteroskedasticity, we compute Newey-West / Bartlett HAC standard errors and 95% confidence intervals for the annualized **Net Sharpe Ratios** (Lo, 2002). We also run an **Off-the-Top Asset Drop** test (excluding one ETF at a time) to verify that outperformance does not depend on any single commodity contract."""
+Because daily strategy returns exhibit serial correlation and heteroskedasticity, we compute autocorrelation-consistent (HAC) standard errors and 95% confidence intervals for the annualized **Net Sharpe Ratios** following Lo (2002). We also run an **Off-the-Top Asset Drop** test (excluding one ETF at a time) to verify that outperformance does not depend on any single commodity contract."""
         )
     )
 
@@ -1423,26 +1432,22 @@ bar(
             r"""## 8. Conclusion, Limitations & References
 
 ### 8.1 Main Empirical Findings
-1. **Net Sharpe Outperformance**: Over the `2020–2026` out-of-sample period, the **Cost-Aware Compact LSTM** achieves a **Gross Sharpe of `1.30`** and **Net Sharpe of `1.26`** (95% HAC CI: $[0.483, 2.029]$, $p = 0.0014$, max net drawdown `-16.68%`), while the single-seed **Compact LSTM** (`lookback=20, hidden_size=8, wd=1e-3`) achieves a **Gross Sharpe of `1.27`** and **Net Sharpe of `1.21`** ($p = 0.0027$). Averaging across 5 seeds (**LSTM Seed Ensemble**) mitigates initialization variance (`0.36 ± 0.58` across individual seeds), yielding a **Gross Sharpe of `0.81`** and **Net Sharpe of `0.78`** ($p = 0.0327$) while compressing maximum net drawdown to `-5.89%`. All three outperform **Simple 252d Momentum** (Net SR `0.76`), **Simple 1d Momentum** (Net SR `0.26`), **Tuned LightGBM** (Net SR `-0.06`), and **Tuned RidgeCV** (Net SR `-0.46`).
+1. **Net Sharpe Outperformance**: Over the `2020–2026` out-of-sample period, the **Cost-Aware Compact LSTM** achieves a **Gross Sharpe of `1.30`** and **Net Sharpe of `1.26`** (95% HAC CI: $[0.483, 2.029]$, $p = 0.0014$, max net drawdown `-16.68%`), while the single-seed **Compact LSTM** (`lookback=20, hidden_size=8, wd=1e-3`) achieves a **Gross Sharpe of `1.27`** and **Net Sharpe of `1.21`** ($p = 0.0027$). Averaging across 5 seeds (**LSTM Seed Ensemble**) mitigates initialization variance (`0.36 ± 0.58` across individual seeds), yielding a **Gross Sharpe of `0.81`** and **Net Sharpe of `0.78`** ($p = 0.0327$) while compressing maximum net drawdown to `-5.89%`. All three outperform **Simple 252d Momentum** (Net SR `0.76`, $p = 0.0441$), as well as **Simple 1d Momentum** (Net SR `0.26`), **Tuned LightGBM** (Net SR `-0.06`), and **Tuned RidgeCV** (Net SR `-0.46`) since their **estimated Net Sharpe ratios** are not significantly distinguishable from $0$ (Lo, 2002).
 2. **Feature Engineering $\times$ Regularization Synergy**: Our $2 \times 2$ ablation (Table 6b) shows that neither multi-horizon momentum features (`X_mom`) in a 60-day architecture (`SR = 0.17`) nor raw 1-day returns (`X_raw`) in a 20-day compact architecture (`SR = 0.20`) succeed alone. High out-of-sample performance requires combining multi-scale momentum inputs (`5d–252d`) with a short 20-day lookback, strong $L_2$ weight decay (`1e-3`), and a 3-year (`756d`) rolling training window.
-3. **Turnover Amortization & Universe Stability**: Fast-decaying daily predictors (`1d Momentum`, `Ridge`, `LightGBM`, holding periods $1.5\text{–}3.3$ days) lose `-3.16%` to `-6.14%` per year to quadratic transaction costs. In contrast, the **LSTM Seed Ensemble** (`turnover = 64.75`, cost drag `-0.18%` p.a.) and **Cost-Aware Compact LSTM** (`turnover = 88.16`, cost drag `-0.36%` p.a.) preserve $>96\%$ of their gross Sharpe ratio net of costs, remain profitable under $2\times$ and $3\times$ cost stress tests, and maintain positive Sharpe ratios across all 4-ETF leave-one-out subsets.
+3. **Turnover Amortization & Universe Stability**: Fast-decaying daily predictors (`1d Momentum`, `Ridge`, `LightGBM`, holding periods $1.5\text{–}3.3$ days) lose `-3.16%` to `-6.14%` per year to quadratic transaction costs. In contrast, the **LSTM Seed Ensemble** (`turnover = 64.75`, cost drag `-0.18%` p.a.) and **Cost-Aware Compact LSTM** (`turnover = 88.16`, cost drag `-0.36%` p.a.) preserve $>96\%$ of their gross Sharpe ratio net of costs, remain profitable under $2\times$ and $3\times$ cost stress tests (Gârleanu & Pedersen, 2013), and maintain positive Sharpe ratios across all 4-ETF leave-one-out subsets.
 
 ### 8.2 Methodological Limitations & Extensions
-1. **Two-Stage Regression Loss vs. End-to-End Sharpe Optimization**: `PyTorchLSTMRegressor` minimizes pointwise Huber loss on next-day returns before passing forecasts into `MeanVariance`. Training the network end-to-end on a differentiable Sharpe or net-of-cost utility objective (Lim et al., 2019; Wood et al., 2022) would align gradient updates directly with portfolio risk-adjusted return.
+1. **Two-Stage Regression Loss vs. End-to-End Sharpe Optimization**: `PyTorchLSTMRegressor` minimizes pointwise Huber loss on next-day returns before passing forecasts into `MeanVariance`. Training the network end-to-end on a differentiable Sharpe or net-of-cost utility objective (Lim et al., 2019) would align gradient updates directly with portfolio risk-adjusted return.
 2. **Static Pre-2020 Calibration vs. Rolling Nested Re-Calibration**: Freezing the 2012–2019 calibration winner (`lookback=32, wd=3.4e-4`) across 2020–2026 suffered from regime lag during the pandemic and inflation shocks (`OOS SR = -0.07`), whereas `lookback=20` achieved `1.27`. Re-running hyperparameter search on a rolling 1- to 2-year schedule would allow the pipeline to adapt sequence length as volatility regimes shift.
-3. **Sideways Regimes (`2016–2019`)**: Both linear momentum (`SR = 0.26`) and LSTM models struggled during the low-volatility, range-bound 2016–2019 period (Table 6a). Incorporating self-attention or changepoint features could improve adaptation between trend and mean-reversion regimes.
-4. **ETF Roll Yield & Composite Overlap**: Because `DBC`, `USO`, and `DBA` bundle spot changes with front-month futures roll yield and `DBC` partially overlaps with `USO`, `GLD`, and `DBA`, adding explicit term-structure carry features (1st- vs. 2nd-nearby futures slopes) is a natural extension.
+3. **Sideways Regimes (`2016–2019`)**: Both linear momentum (`SR = 0.26`) and LSTM models struggled during the low-volatility, range-bound 2016–2019 period (Table 6a). Incorporating regime-filtering or changepoint features could improve adaptation between trend and mean-reversion regimes.
+4. **ETF Roll Yield & Composite Overlap**: Because `DBC`, `USO`, and `DBA` bundle spot changes with front-month futures roll yield and `DBC` partially overlaps with `USO`, `GLD`, and `DBA`, adding explicit term-structure carry features (1st- vs. 2nd-nearby futures slopes) is a natural extension (Moskowitz et al., 2012).
 
 ### References
-- Ampountolas, A. (2024). Forecasting orange juice futures: LSTM, ConvLSTM, and traditional models across trading horizons. *Journal of Risk and Financial Management*, 17(2).
-- Ben Ameur, H., Boubaker, S., Ftiti, Z., Louhichi, W., & Tissaoui, K. (2024). Forecasting commodity prices: Empirical evidence using deep learning tools. *Annals of Operations Research*, 339, 349–367.
 - Gârleanu, N., & Pedersen, L. H. (2013). Dynamic trading with predictable returns and transaction costs. *The Journal of Finance*, 68(6), 2309–2340.
 - Gu, S., Kelly, B., & Xiu, D. (2020). Empirical asset pricing via machine learning. *The Review of Financial Studies*, 33(5), 2223–2273.
 - Lim, B., Zohren, S., & Roberts, S. (2019). Enhancing time-series momentum strategies using deep neural networks. *The Journal of Financial Data Science*, 1(4), 19–38.
 - Lo, A. W. (2002). The statistics of Sharpe ratios. *Financial Analysts Journal*, 58(4), 36–52.
-- Miffre, J., & Rallis, G. (2007). Momentum strategies in commodity futures markets. *Journal of Banking & Finance*, 31(6), 1863–1886.
-- Moskowitz, T. J., Ooi, Y. H., & Pedersen, L. H. (2012). Time series momentum. *Journal of Financial Economics*, 104(2), 228–250.
-- Wood, K., Giegerich, S., Roberts, S., & Zohren, S. (2022). Trading with the Momentum Transformer: An intelligent and interpretable architecture. *arXiv:2112.08534v3*."""
+- Moskowitz, T. J., Ooi, Y. H., & Pedersen, L. H. (2012). Time series momentum. *Journal of Financial Economics*, 104(2), 228–250."""
         )
     )
 

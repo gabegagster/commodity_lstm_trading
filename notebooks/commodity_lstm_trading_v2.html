@@ -7511,13 +7511,34 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=204b78b5">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=500bb25c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h1 id="Deep-Sequence-Models-in-Commodity-Markets">Deep Sequence Models in Commodity Markets<a class="anchor-link" href="#Deep-Sequence-Models-in-Commodity-Markets">¶</a></h1><p><strong>Authors:</strong> Gabriel Himmelein &amp; Tomàs Planelles Alonso</p>
+<blockquote>
+<p><strong>AI Usage &amp; Verification Note:</strong> The code in this notebook was developed through a combination of hand-coding and LLM-assisted coding. All model architectures, walk-forward backtesting logic, transaction cost calculations, and empirical results have been independently executed and carefully checked by the authors.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Author</th>
+<th style="text-align:left">Contributions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>Gabriel Himmelein</strong></td>
+<td style="text-align:left">Data pipeline &amp; EDA (Sec. 1), multi-horizon momentum engineering (Sec. 2), PyTorch <code>CommodityLSTM</code> &amp; <code>skfin</code> wrapper (Sec. 3), pre-2020 random search calibration (Sec. 4), OOS walk-forward evaluation (Sec. 5), 5-seed ensembling, regime sensitivity &amp; $2 \times 2$ ablation (Sec. 6).</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Tomàs Planelles Alonso</strong></td>
+<td style="text-align:left">Tuning of <code>RidgeCV</code> &amp; <code>MultiLGBMRegressor</code> baselines (Sec. 7.1), quadratic transaction cost modeling &amp; cost-aware <code>WalkForwardMeanVarianceWithCost</code> optimization (Sec. 7.2), Lo (2002) Newey-West HAC inference &amp; leave-one-out stability (Sec. 7.3), conclusions &amp; limitations (Sec. 8).</td>
+</tr>
+</tbody>
+</table>
 <p>This notebook evaluates whether a compact, regularized <strong>Long Short-Term Memory (LSTM)</strong> network can improve the <strong>net Sharpe ratio (after transaction costs)</strong> of a time-series momentum strategy across five liquid commodity ETFs compared to <strong>Simple Momentum</strong>, <strong>Ridge / RidgeCV</strong>, and <strong>LightGBM</strong> within the <code>skfin</code> walk-forward Mean-Variance framework:</p>
 <ul>
 <li><strong>DBC</strong>: Invesco DB Commodity Index Tracking Fund (broad diversified commodities)</li>
@@ -7526,12 +7547,12 @@ a.anchor-link {
 <li><strong>SLV</strong>: iShares Silver Trust (silver)</li>
 <li><strong>DBA</strong>: Invesco DB Agriculture Fund (agriculture)</li>
 </ul>
-<p>Our empirical design connects five strands of the quantitative finance literature: time-series momentum across 1- to 12-month horizons in commodity markets (Miffre &amp; Rallis, 2007; Moskowitz et al., 2012), deep sequence models for momentum and regime turning points (Lim et al., 2019; Wood et al., 2022), nonlinear forecasting across diversified commodity baskets (Ampountolas, 2024; Ben Ameur et al., 2024), dynamic portfolio optimization under quadratic transaction costs (Gârleanu &amp; Pedersen, 2013), and multi-seed ensembling with autocorrelation-consistent (HAC) Sharpe inference (Lo, 2002; Gu et al., 2020).</p>
+<p>Our empirical setup builds on five core papers: time-series momentum across 1- to 12-month horizons (Moskowitz et al., 2012), deep sequence models for time-series momentum (Lim et al., 2019), machine learning return prediction with Huber loss and multi-seed neural network ensembling (Gu et al., 2020), dynamic portfolio optimization under quadratic transaction costs (Gârleanu &amp; Pedersen, 2013), and autocorrelation-consistent (HAC) Sharpe ratio inference (Lo, 2002).</p>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1f9d83b1">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6bb06de2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7540,14 +7561,14 @@ a.anchor-link {
 <h2 id="1.-Setup,-Data-Pipeline-&amp;-Exploratory-Analysis">1. Setup, Data Pipeline &amp; Exploratory Analysis<a class="anchor-link" href="#1.-Setup,-Data-Pipeline-&amp;-Exploratory-Analysis">¶</a></h2><p>We source daily total returns via <code>skfin.datasets.load_yf_returns</code>. Futures-based ETFs (<code>DBC</code>, <code>USO</code>, <code>DBA</code>) combine spot price movements with futures roll yield (positive in backwardation, negative in contango) and collateral interest, whereas physically backed trusts (<code>GLD</code>, <code>SLV</code>) track spot bullion net of storage fees.</p>
 <p>To enforce strict chronological integrity and prevent look-ahead bias:</p>
 <ol>
-<li><strong>Synchronized Inception (<code>2007–2026</code>, $N = 5,158$ business days)</strong>: Observations prior to the newest ETF's launch (<strong>DBA</strong> in January 2007) are dropped, capturing the full post-financialization history of this 5-ETF universe.</li>
-<li><strong>Business-Day Alignment &amp; Total Returns</strong>: Series are reindexed to business days (<code>freq='B'</code>) with zero return on market holidays, incorporating both price changes and cash distributions.</li>
+<li><strong>Synchronized Inception (<code>2007–2026</code>, $N = 5,158$ business days)</strong>: Observations prior to the newest ETF's launch (<strong>DBA</strong> in January 2007) are dropped, capturing the full history of this 5-ETF universe without missing-data imputation.</li>
+<li><strong>Business-Day Alignment &amp; Total Returns</strong>: Series are reindexed to business days (<code>freq='B'</code>) with zero return on market holidays, incorporating both price changes and cash distributions. Reindexing to a standard 260-day business calendar (<code>freq='B'</code>) with <code>0.0</code> returns on exchange holidays is required for uniform lag alignment in <code>skfin</code> and matches the <code>260</code>-day annualization factor used in <code>TARGET_VOL</code>, while slightly dampening raw daily sample variance compared to a 252-trading-day convention.</li>
 <li><strong>Uniform Volatility Target</strong>: All strategies are scaled to a 10% annualized volatility target (<code>TARGET_VOL = 0.10 / sqrt(260)</code>) so returns, Sharpe ratios, and drawdowns are compared on an identical risk basis.</li>
 </ol>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2785826e">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7a77f71c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7616,7 +7637,7 @@ a.anchor-link {
 <span class="k">def</span><span class="w"> </span><span class="nf">load_commodity_data</span><span class="p">(</span>
     <span class="n">tickers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">start</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"2007-01-01"</span><span class="p">,</span>
-    <span class="n">end</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">end</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"2026-10-14"</span><span class="p">,</span>
     <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data"</span><span class="p">,</span>
     <span class="n">force_reload</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">resample_bday</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -7636,6 +7657,8 @@ a.anchor-link {
         <span class="k">if</span> <span class="n">resample_bday</span><span class="p">:</span>
             <span class="n">bday_idx</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">end</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">freq</span><span class="o">=</span><span class="s2">"B"</span><span class="p">)</span>
             <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">bday_idx</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">end</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:</span><span class="n">end</span><span class="p">]</span>
         <span class="n">cleaned</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span>
     <span class="k">return</span> <span class="n">cleaned</span>
 
@@ -7775,7 +7798,7 @@ Panel shape: (5158, 5) (2007-01-08 to 2026-10-14)
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=447d8fe4">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=20bae3b4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7785,12 +7808,12 @@ Panel shape: (5158, 5) (2007-01-08 to 2026-10-14)
 <ol>
 <li><strong>Cross-Sectional Volatility Dispersion</strong>: Annualized volatility spans <code>16.68%</code> (<code>DBA</code>), <code>18.14%</code> (<code>GLD</code>), and <code>19.36%</code> (<code>DBC</code>) up to <code>33.00%</code> (<code>SLV</code>) and <code>37.49%</code> (<code>USO</code>). Without covariance and volatility scaling (<code>MeanVariance(risk_target=TARGET_VOL)</code>), crude oil and silver would dominate portfolio variance.</li>
 <li><strong>Contango Drag vs. Dynamic Trend Potential</strong>: Passive buy-and-hold performance is bifurcated between <strong>GLD</strong> (<code>Sharpe = 0.60</code>, <code>10.87%</code> return) and <strong>USO</strong> (<code>Sharpe = 0.07</code>, <code>2.53%</code> return, with a <code>-25.32%</code> single-day crash during the April 2020 WTI negative-oil episode). While passive long energy suffers from negative roll yield during contango storage gluts, time-series momentum can profit from both backwardated rallies and persistent contango sell-offs (Moskowitz et al., 2012).</li>
-<li><strong>Fat Tails &amp; Cross-Sector Diversification</strong>: Negative skewness across all five ETFs (<code>-1.05</code> for <code>SLV</code>, <code>-0.55</code> for <code>USO</code>) and high excess kurtosis (<code>3.46</code> to <code>13.41</code>) motivate training our sequence model with tail-robust <strong>Huber loss ($\delta = 0.01$)</strong> rather than MSE. Meanwhile, low correlations between precious metals (<code>GLD</code>) and energy (<code>USO</code>, <code>0.20</code>) or agriculture (<code>DBA</code>, <code>0.27</code>) provide substantial diversification across the four macroeconomic regimes in our sample (the 2008 GFC, the 2012–2019 commodity bear market, the 2020 COVID-19 crash, and the 2021–2026 inflation cycle).</li>
+<li><strong>Fat Tails &amp; Cross-Sector Diversification</strong>: Negative skewness across all five ETFs (<code>-1.05</code> for <code>SLV</code>, <code>-0.55</code> for <code>USO</code>) and high excess kurtosis (<code>3.46</code> to <code>13.41</code>) motivate training our sequence model with tail-robust <strong>Huber loss ($\delta = 0.01$)</strong> rather than MSE so extreme return outliers do not destabilize gradient updates (Gu et al., 2020). Meanwhile, low correlations between precious metals (<code>GLD</code>) and energy (<code>USO</code>, <code>0.20</code>) or agriculture (<code>DBA</code>, <code>0.27</code>) provide substantial diversification across the four macroeconomic regimes in our sample (the 2008 GFC, the 2012–2019 commodity bear market, the 2020 COVID-19 crash, and the 2021–2026 inflation cycle).</li>
 </ol>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=08291559">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f95d2319">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7834,7 +7857,7 @@ Panel shape: (5158, 5) (2007-01-08 to 2026-10-14)
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a270de76">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ccec857c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7851,7 +7874,7 @@ Panel shape: (5158, 5) (2007-01-08 to 2026-10-14)
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=23f86fd6">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=218ecfac">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7964,27 +7987,27 @@ Panel shape: (5158, 5) (2007-01-08 to 2026-10-14)
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=dc3c0078">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=535d71f3">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="3.-PyTorch-LSTM-Architecture-&amp;-skfin-Estimator-Wrapper">3. PyTorch LSTM Architecture &amp; <code>skfin</code> Estimator Wrapper<a class="anchor-link" href="#3.-PyTorch-LSTM-Architecture-&amp;-skfin-Estimator-Wrapper">¶</a></h2><p>Across sequence steps $t - L + 1, \dots, t$, our <code>CommodityLSTM</code> updates its cell state $c_t$ and hidden state $h_t$ via forget ($f_t$), input ($i_t$), and output ($o_t$) gates:
+<h2 id="3.-PyTorch-LSTM-Architecture-&amp;-skfin-Estimator-Wrapper">3. PyTorch LSTM Architecture &amp; <code>skfin</code> Estimator Wrapper<a class="anchor-link" href="#3.-PyTorch-LSTM-Architecture-&amp;-skfin-Estimator-Wrapper">¶</a></h2><p>Across sequence steps $t - L + 1, \dots, t$, our <code>CommodityLSTM</code> updates its cell state $c_t$ and hidden state $h_t$ via forget ($f_t$), input ($i_t$), and output ($o_t$) gates (Lim et al., 2019):
 $$f_t = \sigma(W_f x_t + U_f h_{t-1} + b_f), \quad i_t = \sigma(W_i x_t + U_i h_{t-1} + b_i), \quad \tilde{c}_t = \tanh(W_c x_t + U_c h_{t-1} + b_c)$$
 $$c_t = f_t \odot c_{t-1} + i_t \odot \tilde{c}_t, \quad o_t = \sigma(W_o x_t + U_o h_{t-1} + b_o), \quad h_t = o_t \odot \tanh(c_t)$$
-High-capacity LSTMs (e.g., 64–100 units) used for non-stationary price-level forecasting overfit rapidly when predicting stationary daily returns $r_{t+1}$ where the signal-to-noise ratio is low. We incorporate five safeguards in <code>CommodityLSTM</code> and <code>PyTorchLSTMRegressor</code>:</p>
+High-capacity LSTMs (e.g., 64–100 units) used for non-stationary price-level forecasting overfit rapidly when predicting stationary daily returns $r_{t+1}$ where the signal-to-noise ratio is low (Gu et al., 2020). We incorporate five safeguards in <code>CommodityLSTM</code> and <code>PyTorchLSTMRegressor</code>:</p>
 <ol>
 <li><strong>Compact Bottleneck &amp; Forget-Gate Bias</strong>: A single recurrent layer (<code>hidden_size=8</code>) with Xavier weight initialization and forget-gate bias initialized to $b_f = +1.0$ so the network retains multi-scale momentum memory early in training.</li>
 <li><strong>Dropout &amp; $L_2$ Weight Decay</strong>: Dropout ($p = 0.2$) on the final hidden state $h_t$ before the linear readout layer, paired with AdamW weight decay ($10^{-3}$) and gradient norm clipping (<code>1.0</code>).</li>
-<li><strong>Tail-Robust Huber Loss ($\delta = 0.01$)</strong>: Quadratic for small residuals ($|e| \le \delta$) and linear in the tails ($|e| &gt; \delta$), preventing extreme return spikes from destabilizing gradient updates.</li>
+<li><strong>Tail-Robust Huber Loss ($\delta = 0.01$)</strong>: Quadratic for small residuals ($|e| \le \delta$) and linear in the tails ($|e| &gt; \delta$), preventing extreme return spikes from destabilizing gradient updates (Gu et al., 2020).</li>
 <li><strong>Chronological Validation &amp; Early Stopping</strong>: The final 15% of each 756-day training window is held out chronologically (without shuffling) to trigger early stopping (<code>patience=5</code>) and <code>ReduceLROnPlateau</code>.</li>
 <li><strong>Walk-Forward Sequence Buffering (<code>last_train_X_</code>)</strong>: At the end of <code>fit()</code>, the trailing <code>lookback</code> rows of the training fold are cached and prepended during <code>predict(X_test)</code> so every day of each 21-day out-of-sample fold has a complete $L$-day lookback sequence without look-ahead bias.</li>
 </ol>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=477503ed">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=dea74016">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8039,10 +8062,10 @@ High-capacity LSTMs (e.g., 64–100 units) used for non-stationary price-level f
     <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_features</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
     <span class="k">if</span> <span class="n">n_samples</span> <span class="o">&lt;</span> <span class="n">lookback</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Samples (</span><span class="si">{</span><span class="n">n_samples</span><span class="si">}</span><span class="s2">) &lt; lookback (</span><span class="si">{</span><span class="n">lookback</span><span class="si">}</span><span class="s2">)."</span><span class="p">)</span>
-    <span class="n">n_seq</span> <span class="o">=</span> <span class="n">n_samples</span> <span class="o">-</span> <span class="n">lookback</span> <span class="o">+</span> <span class="mi">1</span>
-    <span class="n">X_seq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n_seq</span><span class="p">,</span> <span class="n">lookback</span><span class="p">,</span> <span class="n">n_features</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_seq</span><span class="p">):</span>
-        <span class="n">X_seq</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">lookback</span><span class="p">]</span>
+    <span class="n">X_seq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">stride_tricks</span><span class="o">.</span><span class="n">sliding_window_view</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">window_shape</span><span class="o">=</span><span class="n">lookback</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">X_seq</span><span class="p">,</span> <span class="kc">None</span>
     <span class="n">y_seq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">lookback</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">:],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
@@ -8230,18 +8253,18 @@ CommodityLSTM(
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8d0814bd">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ac59e6b7">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="4.-In-Sample-Hyperparameter-Calibration-(2012%E2%80%932019)">4. In-Sample Hyperparameter Calibration (2012–2019)<a class="anchor-link" href="#4.-In-Sample-Hyperparameter-Calibration-(2012%E2%80%932019)">¶</a></h2><p>Tuning neural network hyperparameters on the 2020–2026 test period would introduce look-ahead selection bias. Instead, we run a 15-trial <strong>Random Search</strong> (<code>ParameterSampler</code>) inside <code>Backtester</code> strictly over the pre-test calibration window (<strong>2012–2019</strong>), sampling <code>hidden_size</code> $\in \{6,\dots,16\}$, <code>lookback</code> $\in \{15,\dots,44\}$, <code>weight_decay</code> $\sim \text{loguniform}(10^{-4}, 5\times 10^{-3})$, <code>dropout</code> $\sim \text{uniform}(0.10, 0.35)$, and <code>lr</code> $\sim \text{loguniform}(5\times 10^{-4}, 2\times 10^{-3})$.</p>
+<h2 id="4.-In-Sample-Hyperparameter-Calibration-(2012%E2%80%932019)">4. In-Sample Hyperparameter Calibration (2012–2019)<a class="anchor-link" href="#4.-In-Sample-Hyperparameter-Calibration-(2012%E2%80%932019)">¶</a></h2><p>Tuning neural network hyperparameters on the 2020–2026 test period would introduce look-ahead selection bias (Lim et al., 2019). Instead, we run a 15-trial <strong>Random Search</strong> (<code>ParameterSampler</code>) inside <code>Backtester</code> strictly over the pre-test calibration window (<strong>2012–2019</strong>), sampling <code>hidden_size</code> $\in \{6,\dots,16\}$, <code>lookback</code> $\in \{15,\dots,44\}$, <code>weight_decay</code> $\sim \text{loguniform}(10^{-4}, 5\times 10^{-3})$, <code>dropout</code> $\sim \text{uniform}(0.10, 0.35)$, and <code>lr</code> $\sim \text{loguniform}(5\times 10^{-4}, 2\times 10^{-3})$.</p>
 <p>During the comparatively quiet, range-bound <strong>2012–2019</strong> regime, longer sequence windows (<code>lookback</code>) correlated positively with Sharpe ratio while strong $L_2$ weight decay correlated negatively, selecting <strong>Trial 9</strong> (<code>hidden_size=9</code>, <code>lookback=32</code>, <code>weight_decay=3.4e-4</code>, <code>dropout=0.327</code>, calibration Sharpe <code>0.651</code>). In Sections 5 and 6, we test whether this longer-memory pre-2020 specification survives the abrupt post-2020 macroeconomic shocks compared to a shorter-memory, strongly regularized model (<code>lookback=20</code>, <code>hidden_size=8</code>, <code>weight_decay=1e-3</code>).</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5e1904cc">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d00abe9b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8445,7 +8468,7 @@ CommodityLSTM(
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=225abcad">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3d2ecba0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8463,7 +8486,7 @@ CommodityLSTM(
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ddc3ea62">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=daf649ca">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8689,7 +8712,7 @@ CommodityLSTM(
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f857fb62">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4a691e55">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8703,13 +8726,13 @@ CommodityLSTM(
 <hr/>
 <h2 id="6.-Robustness:-Multi-Seed-Ensembling,-Historical-Regimes-&amp;-Ablation">6. Robustness: Multi-Seed Ensembling, Historical Regimes &amp; Ablation<a class="anchor-link" href="#6.-Robustness:-Multi-Seed-Ensembling,-Historical-Regimes-&amp;-Ablation">¶</a></h2><h3 id="6.1-Multi-Seed-Ensembling-&amp;-Why-lookback=20-Beats-lookback=32-After-2020">6.1 Multi-Seed Ensembling &amp; Why <code>lookback=20</code> Beats <code>lookback=32</code> After 2020<a class="anchor-link" href="#6.1-Multi-Seed-Ensembling-&amp;-Why-lookback=20-Beats-lookback=32-After-2020">¶</a></h3><p>Why did the 2012–2019 random search winner (<code>lookback=32, wd=3.4e-4</code>, IS Sharpe <code>0.651</code>) drop to <code>-0.07</code> during 2020–2026 while <code>Compact LSTM (lookback=20, wd=1e-3)</code> achieved <code>1.27</code>?</p>
 <ul>
-<li><strong>Memory Lag at Abrupt Turning Points</strong>: Because LSTM cell states propagate sequentially step-by-step, a long lookback window continues carrying pre-shock hidden states after an abrupt structural break (such as the April 2020 negative oil shock or the 2022 Ukraine invasion), accumulating prediction errors across regime transitions (Wood et al., 2022). Restricting sequence memory to <strong><code>lookback=20</code> business days ($\approx 1$ month)</strong> with strong weight decay (<code>1e-3</code>) flushes stale pre-crisis cell states within four weeks while still accessing 1-week to 12-month momentum at each step via <code>X_mom</code>.</li>
+<li><strong>Memory Lag at Abrupt Turning Points</strong>: Because LSTM cell states propagate sequentially step-by-step, a long lookback window continues carrying pre-shock hidden states after an abrupt structural break (such as the April 2020 negative oil shock or the 2022 Ukraine invasion), accumulating prediction errors across regime transitions (Lim et al., 2019). Restricting sequence memory to <strong><code>lookback=20</code> business days ($\approx 1$ month)</strong> with strong weight decay (<code>1e-3</code>) flushes stale pre-crisis cell states within four weeks while still accessing 1-week to 12-month momentum at each step via <code>X_mom</code>.</li>
 <li><strong>Multi-Seed Ensembling</strong>: Because neural network training is sensitive to random weight initialization and mini-batch ordering (Gu et al., 2020), we evaluate <code>Compact LSTM</code> across <strong>5 independent seeds (<code>42, 101, 2024, 7, 999</code>)</strong> and form an equal-weighted <strong>Seed Ensemble</strong> ($h_t^{\text{ens}} = \frac{1}{5}\sum_{k=1}^5 h_t^{(k)}$). While individual seeds exhibit substantial initialization dispersion (Sharpe ratios of <code>1.27, 0.35, -0.17, 0.69, -0.33</code>, mean <code>0.36 ± 0.58</code>), averaging holdings across the 5 seeds cancels idiosyncratic forecast noise, reducing annualized portfolio volatility to <code>6.03%</code>, cutting annualized turnover nearly in half (<code>64.75</code> vs. <code>125.95</code>), slashing maximum net drawdown to <code>-5.89%</code>, and achieving a <strong>5-Seed Ensemble Gross Sharpe of <code>0.81</code> (<code>0.809</code>)</strong>.</li>
 </ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b933a381">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=43a5f916">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8785,7 +8808,7 @@ Mean +/- Std across seeds: 0.36 +/- 0.58 (Min: -0.33, Max: 1.27) | 5-Seed Ensemb
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3b14339f">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=079826f8">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8800,7 +8823,7 @@ Mean +/- Std across seeds: 0.36 +/- 0.58 (Min: -0.33, Max: 1.27) | 5-Seed Ensemb
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ad2b68b9">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ba1bb60b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9059,17 +9082,17 @@ Mean +/- Std across seeds: 0.36 +/- 0.58 (Min: -0.33, Max: 1.27) | 5-Seed Ensemb
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bceada96">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5969fae2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="7.-Tuned-Baselines,-Transaction-Cost-Modeling-&amp;-Statistical-Validation">7. Tuned Baselines, Transaction Cost Modeling &amp; Statistical Validation<a class="anchor-link" href="#7.-Tuned-Baselines,-Transaction-Cost-Modeling-&amp;-Statistical-Validation">¶</a></h2><h3 id="7.1-Hyperparameter-Tuning-of-Linear-and-Tree-Baselines-(RidgeCV-&amp;-MultiLGBMRegressor)">7.1 Hyperparameter Tuning of Linear and Tree Baselines (<code>RidgeCV</code> &amp; <code>MultiLGBMRegressor</code>)<a class="anchor-link" href="#7.1-Hyperparameter-Tuning-of-Linear-and-Tree-Baselines-(RidgeCV-&amp;-MultiLGBMRegressor)">¶</a></h3><p>To ensure a fair comparison on <code>X_mom</code>, we tune both <strong><code>RidgeCV</code></strong> (<code>alphas=[1e-2, 1e-1, 1, 10, 100, 1000]</code>) and a 12-trial <strong><code>MultiLGBMRegressor</code></strong> random search on the same <strong>2012–2019</strong> calibration window and evaluate them out-of-sample over <strong>2020–2026</strong>.</p>
+<h2 id="7.-Tuned-Baselines,-Transaction-Cost-Modeling-&amp;-Statistical-Validation">7. Tuned Baselines, Transaction Cost Modeling &amp; Statistical Validation<a class="anchor-link" href="#7.-Tuned-Baselines,-Transaction-Cost-Modeling-&amp;-Statistical-Validation">¶</a></h2><h3 id="7.1-Hyperparameter-Tuning-of-Linear-and-Tree-Baselines-(RidgeCV-&amp;-MultiLGBMRegressor)">7.1 Hyperparameter Tuning of Linear and Tree Baselines (<code>RidgeCV</code> &amp; <code>MultiLGBMRegressor</code>)<a class="anchor-link" href="#7.1-Hyperparameter-Tuning-of-Linear-and-Tree-Baselines-(RidgeCV-&amp;-MultiLGBMRegressor)">¶</a></h3><p>To ensure a fair comparison on <code>X_mom</code>, we tune both <strong><code>RidgeCV</code></strong> (<code>alphas=[1e-2, 1e-1, 1, 10, 100, 1000]</code>) and a 12-trial <strong><code>MultiLGBMRegressor</code></strong> random search on the same <strong>2012–2019</strong> calibration window and evaluate them out-of-sample over <strong>2020–2026</strong> (Gu et al., 2020). We expect a large shrinking factor for <strong><code>RidgeCV</code></strong> in order to balance the non-linearity of the data.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=853a5c03">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8c6a7df9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9238,7 +9261,7 @@ Mean +/- Std across seeds: 0.36 +/- 0.58 (Min: -0.33, Max: 1.27) | 5-Seed Ensemb
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b5eb881b">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6d3cb70a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9250,7 +9273,7 @@ We evaluate transaction costs both post-trade via <code>compute_pnl_components</
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=20b156e0">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b731b3b5">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9740,17 +9763,17 @@ We evaluate transaction costs both post-trade via <code>compute_pnl_components</
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8d030b01">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d04b6241">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="7.3-Statistical-Inference-(Lo,-2002-HAC-Confidence-Intervals)-&amp;-Universe-Stability">7.3 Statistical Inference (Lo, 2002 HAC Confidence Intervals) &amp; Universe Stability<a class="anchor-link" href="#7.3-Statistical-Inference-(Lo,-2002-HAC-Confidence-Intervals)-&amp;-Universe-Stability">¶</a></h3><p>Because daily strategy returns exhibit serial correlation and heteroskedasticity, we compute Newey-West / Bartlett HAC standard errors and 95% confidence intervals for the annualized <strong>Net Sharpe Ratios</strong> (Lo, 2002). We also run an <strong>Off-the-Top Asset Drop</strong> test (excluding one ETF at a time) to verify that outperformance does not depend on any single commodity contract.</p>
+<h3 id="7.3-Statistical-Inference-(Lo,-2002-HAC-Confidence-Intervals)-&amp;-Universe-Stability">7.3 Statistical Inference (Lo, 2002 HAC Confidence Intervals) &amp; Universe Stability<a class="anchor-link" href="#7.3-Statistical-Inference-(Lo,-2002-HAC-Confidence-Intervals)-&amp;-Universe-Stability">¶</a></h3><p>Because daily strategy returns exhibit serial correlation and heteroskedasticity, we compute autocorrelation-consistent (HAC) standard errors and 95% confidence intervals for the annualized <strong>Net Sharpe Ratios</strong> following Lo (2002). We also run an <strong>Off-the-Top Asset Drop</strong> test (excluding one ETF at a time) to verify that outperformance does not depend on any single commodity contract.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=37d9a536">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b59f2c2c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9957,33 +9980,29 @@ We evaluate transaction costs both post-trade via <code>compute_pnl_components</
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=771de758">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b2cbf905">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="8.-Conclusion,-Limitations-&amp;-References">8. Conclusion, Limitations &amp; References<a class="anchor-link" href="#8.-Conclusion,-Limitations-&amp;-References">¶</a></h2><h3 id="8.1-Main-Empirical-Findings">8.1 Main Empirical Findings<a class="anchor-link" href="#8.1-Main-Empirical-Findings">¶</a></h3><ol>
-<li><strong>Net Sharpe Outperformance</strong>: Over the <code>2020–2026</code> out-of-sample period, the <strong>Cost-Aware Compact LSTM</strong> achieves a <strong>Gross Sharpe of <code>1.30</code></strong> and <strong>Net Sharpe of <code>1.26</code></strong> (95% HAC CI: $[0.483, 2.029]$, $p = 0.0014$, max net drawdown <code>-16.68%</code>), while the single-seed <strong>Compact LSTM</strong> (<code>lookback=20, hidden_size=8, wd=1e-3</code>) achieves a <strong>Gross Sharpe of <code>1.27</code></strong> and <strong>Net Sharpe of <code>1.21</code></strong> ($p = 0.0027$). Averaging across 5 seeds (<strong>LSTM Seed Ensemble</strong>) mitigates initialization variance (<code>0.36 ± 0.58</code> across individual seeds), yielding a <strong>Gross Sharpe of <code>0.81</code></strong> and <strong>Net Sharpe of <code>0.78</code></strong> ($p = 0.0327$) while compressing maximum net drawdown to <code>-5.89%</code>. All three outperform <strong>Simple 252d Momentum</strong> (Net SR <code>0.76</code>), <strong>Simple 1d Momentum</strong> (Net SR <code>0.26</code>), <strong>Tuned LightGBM</strong> (Net SR <code>-0.06</code>), and <strong>Tuned RidgeCV</strong> (Net SR <code>-0.46</code>).</li>
+<li><strong>Net Sharpe Outperformance</strong>: Over the <code>2020–2026</code> out-of-sample period, the <strong>Cost-Aware Compact LSTM</strong> achieves a <strong>Gross Sharpe of <code>1.30</code></strong> and <strong>Net Sharpe of <code>1.26</code></strong> (95% HAC CI: $[0.483, 2.029]$, $p = 0.0014$, max net drawdown <code>-16.68%</code>), while the single-seed <strong>Compact LSTM</strong> (<code>lookback=20, hidden_size=8, wd=1e-3</code>) achieves a <strong>Gross Sharpe of <code>1.27</code></strong> and <strong>Net Sharpe of <code>1.21</code></strong> ($p = 0.0027$). Averaging across 5 seeds (<strong>LSTM Seed Ensemble</strong>) mitigates initialization variance (<code>0.36 ± 0.58</code> across individual seeds), yielding a <strong>Gross Sharpe of <code>0.81</code></strong> and <strong>Net Sharpe of <code>0.78</code></strong> ($p = 0.0327$) while compressing maximum net drawdown to <code>-5.89%</code>. All three outperform <strong>Simple 252d Momentum</strong> (Net SR <code>0.76</code>, $p = 0.0441$), as well as <strong>Simple 1d Momentum</strong> (Net SR <code>0.26</code>), <strong>Tuned LightGBM</strong> (Net SR <code>-0.06</code>), and <strong>Tuned RidgeCV</strong> (Net SR <code>-0.46</code>) since their <strong>estimated Net Sharpe ratios</strong> are not significantly distinguishable from $0$ (Lo, 2002).</li>
 <li><strong>Feature Engineering $\times$ Regularization Synergy</strong>: Our $2 \times 2$ ablation (Table 6b) shows that neither multi-horizon momentum features (<code>X_mom</code>) in a 60-day architecture (<code>SR = 0.17</code>) nor raw 1-day returns (<code>X_raw</code>) in a 20-day compact architecture (<code>SR = 0.20</code>) succeed alone. High out-of-sample performance requires combining multi-scale momentum inputs (<code>5d–252d</code>) with a short 20-day lookback, strong $L_2$ weight decay (<code>1e-3</code>), and a 3-year (<code>756d</code>) rolling training window.</li>
-<li><strong>Turnover Amortization &amp; Universe Stability</strong>: Fast-decaying daily predictors (<code>1d Momentum</code>, <code>Ridge</code>, <code>LightGBM</code>, holding periods $1.5\text{–}3.3$ days) lose <code>-3.16%</code> to <code>-6.14%</code> per year to quadratic transaction costs. In contrast, the <strong>LSTM Seed Ensemble</strong> (<code>turnover = 64.75</code>, cost drag <code>-0.18%</code> p.a.) and <strong>Cost-Aware Compact LSTM</strong> (<code>turnover = 88.16</code>, cost drag <code>-0.36%</code> p.a.) preserve $&gt;96\%$ of their gross Sharpe ratio net of costs, remain profitable under $2\times$ and $3\times$ cost stress tests, and maintain positive Sharpe ratios across all 4-ETF leave-one-out subsets.</li>
+<li><strong>Turnover Amortization &amp; Universe Stability</strong>: Fast-decaying daily predictors (<code>1d Momentum</code>, <code>Ridge</code>, <code>LightGBM</code>, holding periods $1.5\text{–}3.3$ days) lose <code>-3.16%</code> to <code>-6.14%</code> per year to quadratic transaction costs. In contrast, the <strong>LSTM Seed Ensemble</strong> (<code>turnover = 64.75</code>, cost drag <code>-0.18%</code> p.a.) and <strong>Cost-Aware Compact LSTM</strong> (<code>turnover = 88.16</code>, cost drag <code>-0.36%</code> p.a.) preserve $&gt;96\%$ of their gross Sharpe ratio net of costs, remain profitable under $2\times$ and $3\times$ cost stress tests (Gârleanu &amp; Pedersen, 2013), and maintain positive Sharpe ratios across all 4-ETF leave-one-out subsets.</li>
 </ol>
 <h3 id="8.2-Methodological-Limitations-&amp;-Extensions">8.2 Methodological Limitations &amp; Extensions<a class="anchor-link" href="#8.2-Methodological-Limitations-&amp;-Extensions">¶</a></h3><ol>
-<li><strong>Two-Stage Regression Loss vs. End-to-End Sharpe Optimization</strong>: <code>PyTorchLSTMRegressor</code> minimizes pointwise Huber loss on next-day returns before passing forecasts into <code>MeanVariance</code>. Training the network end-to-end on a differentiable Sharpe or net-of-cost utility objective (Lim et al., 2019; Wood et al., 2022) would align gradient updates directly with portfolio risk-adjusted return.</li>
+<li><strong>Two-Stage Regression Loss vs. End-to-End Sharpe Optimization</strong>: <code>PyTorchLSTMRegressor</code> minimizes pointwise Huber loss on next-day returns before passing forecasts into <code>MeanVariance</code>. Training the network end-to-end on a differentiable Sharpe or net-of-cost utility objective (Lim et al., 2019) would align gradient updates directly with portfolio risk-adjusted return.</li>
 <li><strong>Static Pre-2020 Calibration vs. Rolling Nested Re-Calibration</strong>: Freezing the 2012–2019 calibration winner (<code>lookback=32, wd=3.4e-4</code>) across 2020–2026 suffered from regime lag during the pandemic and inflation shocks (<code>OOS SR = -0.07</code>), whereas <code>lookback=20</code> achieved <code>1.27</code>. Re-running hyperparameter search on a rolling 1- to 2-year schedule would allow the pipeline to adapt sequence length as volatility regimes shift.</li>
-<li><strong>Sideways Regimes (<code>2016–2019</code>)</strong>: Both linear momentum (<code>SR = 0.26</code>) and LSTM models struggled during the low-volatility, range-bound 2016–2019 period (Table 6a). Incorporating self-attention or changepoint features could improve adaptation between trend and mean-reversion regimes.</li>
-<li><strong>ETF Roll Yield &amp; Composite Overlap</strong>: Because <code>DBC</code>, <code>USO</code>, and <code>DBA</code> bundle spot changes with front-month futures roll yield and <code>DBC</code> partially overlaps with <code>USO</code>, <code>GLD</code>, and <code>DBA</code>, adding explicit term-structure carry features (1st- vs. 2nd-nearby futures slopes) is a natural extension.</li>
+<li><strong>Sideways Regimes (<code>2016–2019</code>)</strong>: Both linear momentum (<code>SR = 0.26</code>) and LSTM models struggled during the low-volatility, range-bound 2016–2019 period (Table 6a). Incorporating regime-filtering or changepoint features could improve adaptation between trend and mean-reversion regimes.</li>
+<li><strong>ETF Roll Yield &amp; Composite Overlap</strong>: Because <code>DBC</code>, <code>USO</code>, and <code>DBA</code> bundle spot changes with front-month futures roll yield and <code>DBC</code> partially overlaps with <code>USO</code>, <code>GLD</code>, and <code>DBA</code>, adding explicit term-structure carry features (1st- vs. 2nd-nearby futures slopes) is a natural extension (Moskowitz et al., 2012).</li>
 </ol>
 <h3 id="References">References<a class="anchor-link" href="#References">¶</a></h3><ul>
-<li>Ampountolas, A. (2024). Forecasting orange juice futures: LSTM, ConvLSTM, and traditional models across trading horizons. <em>Journal of Risk and Financial Management</em>, 17(2).</li>
-<li>Ben Ameur, H., Boubaker, S., Ftiti, Z., Louhichi, W., &amp; Tissaoui, K. (2024). Forecasting commodity prices: Empirical evidence using deep learning tools. <em>Annals of Operations Research</em>, 339, 349–367.</li>
 <li>Gârleanu, N., &amp; Pedersen, L. H. (2013). Dynamic trading with predictable returns and transaction costs. <em>The Journal of Finance</em>, 68(6), 2309–2340.</li>
 <li>Gu, S., Kelly, B., &amp; Xiu, D. (2020). Empirical asset pricing via machine learning. <em>The Review of Financial Studies</em>, 33(5), 2223–2273.</li>
 <li>Lim, B., Zohren, S., &amp; Roberts, S. (2019). Enhancing time-series momentum strategies using deep neural networks. <em>The Journal of Financial Data Science</em>, 1(4), 19–38.</li>
 <li>Lo, A. W. (2002). The statistics of Sharpe ratios. <em>Financial Analysts Journal</em>, 58(4), 36–52.</li>
-<li>Miffre, J., &amp; Rallis, G. (2007). Momentum strategies in commodity futures markets. <em>Journal of Banking &amp; Finance</em>, 31(6), 1863–1886.</li>
 <li>Moskowitz, T. J., Ooi, Y. H., &amp; Pedersen, L. H. (2012). Time series momentum. <em>Journal of Financial Economics</em>, 104(2), 228–250.</li>
-<li>Wood, K., Giegerich, S., Roberts, S., &amp; Zohren, S. (2022). Trading with the Momentum Transformer: An intelligent and interpretable architecture. <em>arXiv:2112.08534v3</em>.</li>
 </ul>
 </div>
 </div>
