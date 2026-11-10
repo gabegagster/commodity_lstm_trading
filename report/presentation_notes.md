@@ -1,5 +1,5 @@
 # 5-Minute Notebook Walkthrough (Compact) + Q&A Deep-Dive Reference
-**Target File to Scroll:** `notebooks/commodity_lstm_trading_v2.ipynb` (or `.html`)  
+**Target File to Scroll:** `notebooks/commodity_lstm_trading.ipynb` (or `.html`)  
 **Total Time Budget:** **5:00 minutes** (**3:15 Gabriel** [Sections 1–6, `Out [1]–[8]`] | **1:45 Tomàs** [Sections 7–8, `Out [9]–[11]`])
 
 ---
