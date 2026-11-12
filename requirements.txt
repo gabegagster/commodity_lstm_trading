@@ -1,18 +1,25 @@
-# Core Data Science & Finance
-pandas
+# Core Data Science & ML
 numpy
+pandas
+scipy
 scikit-learn
+lightgbm
+
+# Financial Data & Caching
 yfinance
+pyarrow
 
 # Deep Learning
 torch
-torchaudio
-torchvision
 
-# Custom Course Library (Assuming skfin is available via pip or local install)
-skfin
-
-# Notebooks & Plotting
+# Notebooks, Plotting & Utilities
 jupyterlab
 matplotlib
 seaborn
+nbformat
+tqdm
+
+# Custom Course Library
+# Note: 'skfin' is the university course library and is not hosted on public PyPI.
+# Please ensure skfin is installed in your environment (e.g., pip install -e /path/to/skfin).
+# skfin
